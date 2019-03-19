@@ -10,6 +10,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import javax.swing.JOptionPane;
+
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.group.ChannelGroup;
@@ -76,6 +78,8 @@ public class StreamServerAgent implements IStreamServerAgent {
 
 		@Override
 		public void onClientConnectedIn(Channel channel) {
+
+			JOptionPane.showMessageDialog(null, "Incoming connection!");
 			// here we just start to stream when the first client connected in
 			channelGroup.add(channel);
 			if (!isStreaming) {
@@ -101,8 +105,8 @@ public class StreamServerAgent implements IStreamServerAgent {
 			if (size == 1) {
 				// cancel the task
 				imageGrabTaskFuture.cancel(false);
-				// webcam.close();
-				// isStreaming = false;
+				webcam.close();
+				isStreaming = false;
 			}
 			System.out.println("Remote peer disconnected, remote IP: " + channel.getRemoteAddress());
 		}
@@ -129,7 +133,7 @@ public class StreamServerAgent implements IStreamServerAgent {
 
 			@Override
 			public void run() {
-				System.out.println("image grabed ,count : " + frameCount++);
+				// System.out.println("image grabed ,count : " + frameCount++);
 				BufferedImage bufferedImage = webcam.getImage();
 				/**
 				 * using this when the h264 encoder is added to the pipeline
