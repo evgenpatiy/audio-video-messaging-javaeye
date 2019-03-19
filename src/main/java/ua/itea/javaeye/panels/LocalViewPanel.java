@@ -10,7 +10,7 @@ import javax.swing.JLabel;
 import com.github.sarxos.webcam.Webcam;
 import com.github.sarxos.webcam.WebcamPanel;
 
-import ua.itea.javaeye.utils.Session;
+import ua.itea.javaeye.utils.JavaEyeUtils;
 
 /**
  *
@@ -27,8 +27,7 @@ public class LocalViewPanel extends ViewPanel {
 	private final JLabel webcamFPSLabel = new JLabel();
 	private final JLabel webcamResolutionLabel = new JLabel();
 
-	public LocalViewPanel(Webcam webcam, Session session) {
-		this.session = session;
+	public LocalViewPanel(Webcam webcam) {
 		this.webcam = webcam;
 
 		webcamPanel = new WebcamPanel(this.webcam);
@@ -53,7 +52,7 @@ public class LocalViewPanel extends ViewPanel {
 		info.add(new JLabel(" View resolution:"));
 		info.add(webcamResolutionLabel);
 		info.add(new JLabel(" Local IP: "));
-		info.add(new JLabel(session.getLocalAddress().getHostAddress()));
+		info.add(new JLabel(JavaEyeUtils.localAddress.getHostAddress()));
 		info.add(new JLabel(" Codec: "));
 		info.add(new JLabel("H.264"));
 

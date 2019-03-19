@@ -1,10 +1,12 @@
 package ua.itea.javaeye.utils;
 
 import java.awt.Dimension;
+import java.net.InetAddress;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class JavaEyeUtils {
+	public static InetAddress localAddress = null;
 	public static final Dimension dimension = new Dimension(320, 240);
 
 	public static boolean validIP(String s) {

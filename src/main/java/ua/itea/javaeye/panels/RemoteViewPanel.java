@@ -7,8 +7,6 @@ package ua.itea.javaeye.panels;
 
 import java.awt.image.BufferedImage;
 
-import ua.itea.javaeye.utils.Session;
-
 /**
  *
  * @author yevgen
@@ -20,10 +18,9 @@ public class RemoteViewPanel extends ViewPanel {
 	 */
 	private static final long serialVersionUID = 7928999741730995326L;
 
-	private final VideoPanel videoPanel;;
+	private final VideoPanel videoPanel;
 
-	public RemoteViewPanel(Session session) {
-		this.session = session;
+	public RemoteViewPanel() {
 		this.videoPanel = new VideoPanel();
 
 		setView(videoPanel);

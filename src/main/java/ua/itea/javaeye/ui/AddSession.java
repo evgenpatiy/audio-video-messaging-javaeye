@@ -29,11 +29,9 @@ public class AddSession extends JFrame implements Runnable {
 	 */
 	private static final long serialVersionUID = 7775937214872456459L;
 	private JPanel buttonsPanel;
-	private InetAddress localAddress;
 
-	protected AddSession(JPanel buttonsPanel, InetAddress localAddress) throws HeadlessException {
+	protected AddSession(JPanel buttonsPanel) throws HeadlessException {
 		this.buttonsPanel = buttonsPanel;
-		this.localAddress = localAddress;
 	}
 
 	@Override
@@ -63,7 +61,7 @@ public class AddSession extends JFrame implements Runnable {
 				JOptionPane.showMessageDialog(null, "Provide correct remote IP", "Session address error",
 						JOptionPane.ERROR_MESSAGE);
 			} else {
-				session.setLocalAddress(localAddress);
+				session.setLocalAddress(JavaEyeUtils.localAddress);
 				session.setRemoteName(nameTextField.getText());
 				try {
 					session.setRemoteAddress(InetAddress.getByName(addressTextField.getText()));

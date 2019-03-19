@@ -41,7 +41,6 @@ import com.github.sarxos.webcam.WebcamPanel;
 import com.github.sarxos.webcam.WebcamPicker;
 
 import ua.itea.javaeye.utils.JavaEyeUtils;
-import ua.itea.javaeye.utils.Session;
 
 public class Preferences extends JFrame implements Runnable, WebcamListener, WebcamDiscoveryListener, ItemListener,
 		WindowListener, UncaughtExceptionHandler {
@@ -50,7 +49,7 @@ public class Preferences extends JFrame implements Runnable, WebcamListener, Web
 	 * 
 	 */
 	private static final long serialVersionUID = 6741762424371250099L;
-	private final Session session = new Session();
+	// private final Session session = new Session();
 
 	private Webcam webcam = null;
 	private JPanel webcamSetupPanel = new JPanel();
@@ -63,7 +62,7 @@ public class Preferences extends JFrame implements Runnable, WebcamListener, Web
 	private final JLabel netNIFStatus = new JLabel();
 	private final JLabel netMAC = new JLabel();
 	private boolean networkOK = false;
-	private InetAddress localAddress;
+	// private InetAddress localAddress;
 
 	@Override
 	public void run() {
@@ -72,16 +71,9 @@ public class Preferences extends JFrame implements Runnable, WebcamListener, Web
 
 		JButton sessionListButton = new JButton("Sessions");
 		sessionListButton.addActionListener(event -> {
-			try { // передаем параметры сессии
-				session.setLocalAddress(InetAddress.getByName(netAddress.getText()));
-			} catch (UnknownHostException e) {
-				JOptionPane.showMessageDialog(null, "Unknown host!", "Error", JOptionPane.ERROR_MESSAGE);
-				e.printStackTrace();
-			}
-
 			setVisible(false);
 			dispose();
-			(new Thread(new SessionList(webcam, session, localAddress))).start();
+			(new Thread(new SessionList(webcam))).start();
 		});
 
 		sessionListButton.setEnabled(true);
@@ -182,8 +174,8 @@ public class Preferences extends JFrame implements Runnable, WebcamListener, Web
 				} catch (UnknownHostException ex) {
 				}
 
-				localAddress = Collections.list(inetAddresses).get(0);
-				netAddress.setText(localAddress.getHostAddress());
+				JavaEyeUtils.localAddress = Collections.list(inetAddresses).get(0);
+				netAddress.setText(JavaEyeUtils.localAddress.getHostAddress());
 				try {
 					netMAC.setText(JavaEyeUtils.getStringFromMAC(nif.getHardwareAddress()));
 				} catch (SocketException e1) {

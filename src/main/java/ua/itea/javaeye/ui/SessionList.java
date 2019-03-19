@@ -10,15 +10,16 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.image.BufferedImage;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URL;
+import java.util.ArrayList;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 
 import com.github.sarxos.webcam.Webcam;
 
@@ -42,10 +43,8 @@ public class SessionList extends JFrame implements Runnable {
 	 */
 	private static final long serialVersionUID = 2307756360605280092L;
 	private final Webcam webcam;
-	private final Session session;
 	private final JavaEyeUtils util = new JavaEyeUtils();
 	private DbWorker db = new DbWorker("javaeye.db");
-	protected InetAddress localAdress;
 
 	protected LocalViewPanel localCam;
 	protected RemoteViewPanel remoteCam;
@@ -56,14 +55,11 @@ public class SessionList extends JFrame implements Runnable {
 	private final JButton addSessionButton = new JButton("Session");
 	private final JLabel eyeLabel = new JLabel();
 
-	SessionList(Webcam webcam, Session session, InetAddress localAdress) {
+	SessionList(Webcam webcam) {
 		this.webcam = webcam;
-		this.session = session;
 
-		this.localCam = new LocalViewPanel(webcam, session);
-		this.remoteCam = new RemoteViewPanel(session);
-
-		this.localAdress = localAdress;
+		this.localCam = new LocalViewPanel(webcam);
+		this.remoteCam = new RemoteViewPanel();
 	}
 
 	@Override
@@ -72,8 +68,22 @@ public class SessionList extends JFrame implements Runnable {
 
 		sessionButtonsPanel.setLayout(new GridLayout(10, 1));
 
+		URL iconURL = getClass().getResource("/img/session.png");
+		ImageIcon icon = new ImageIcon(iconURL);
+
 		if (!db.isDbExists()) {
 			db.createDb();
+		} else {
+			ArrayList<Session> sessionList = db.getSessionsList();
+			for (Session session : sessionList) {
+				session.setText(session.getRemoteName());
+				session.setHorizontalAlignment(SwingConstants.LEFT);
+				session.setIcon(icon);
+				session.addActionListener(event -> {
+					System.out.println(session);
+				});
+				sessionButtonsPanel.add(session);
+			}
 		}
 
 		sessionButton.addActionListener(event -> {
@@ -91,11 +101,11 @@ public class SessionList extends JFrame implements Runnable {
 		setTitle("Session list");
 
 		bottomButtonsPanel.setLayout(new FlowLayout());
-		URL iconURL = getClass().getResource("/img/plus.png");
-		ImageIcon icon = new ImageIcon(iconURL);
+		iconURL = getClass().getResource("/img/plus.png");
+		icon = new ImageIcon(iconURL);
 		addSessionButton.setIcon(icon);
 		addSessionButton.addActionListener(event -> {
-			(new Thread(new AddSession(sessionButtonsPanel, localAdress))).start();
+			(new Thread(new AddSession(sessionButtonsPanel))).start();
 		});
 		bottomButtonsPanel.add(addSessionButton);
 
@@ -116,7 +126,7 @@ public class SessionList extends JFrame implements Runnable {
 		// Start stream server!
 
 		StreamServerAgent serverAgent = new StreamServerAgent(webcam, util.dimension);
-		InetSocketAddress myAddress = new InetSocketAddress(session.getLocalAddress(), 20000);
+		InetSocketAddress myAddress = new InetSocketAddress(JavaEyeUtils.localAddress, 20000);
 		serverAgent.start(myAddress);
 		System.out.println("Stream server runs on port " + myAddress);
 	}
