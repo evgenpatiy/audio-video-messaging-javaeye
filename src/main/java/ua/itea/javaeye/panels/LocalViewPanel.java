@@ -16,7 +16,7 @@ import ua.itea.javaeye.utils.JavaEyeUtils;
  *
  * @author yevgen
  */
-public class LocalViewPanel extends ViewPanel {
+public class LocalViewPanel extends ViewPanel implements Runnable {
 
 	/**
 	 * 
@@ -61,7 +61,6 @@ public class LocalViewPanel extends ViewPanel {
 				Thread.sleep(500);
 				webcamFPSLabel.setText(String.format("%4.2f", webcam.getFPS()));
 			} catch (InterruptedException e) {
-				e.printStackTrace();
 			}
 		}
 	}

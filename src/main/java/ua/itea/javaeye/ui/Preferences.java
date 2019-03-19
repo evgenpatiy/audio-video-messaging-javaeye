@@ -14,6 +14,7 @@ import java.awt.event.WindowListener;
 import java.io.IOException;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.URL;
@@ -40,6 +41,7 @@ import com.github.sarxos.webcam.WebcamListener;
 import com.github.sarxos.webcam.WebcamPanel;
 import com.github.sarxos.webcam.WebcamPicker;
 
+import ua.itea.javaeye.agent.StreamServerAgent;
 import ua.itea.javaeye.utils.JavaEyeUtils;
 
 public class Preferences extends JFrame implements Runnable, WebcamListener, WebcamDiscoveryListener, ItemListener,
@@ -49,24 +51,15 @@ public class Preferences extends JFrame implements Runnable, WebcamListener, Web
 	 * 
 	 */
 	private static final long serialVersionUID = 6741762424371250099L;
-	// private final Session session = new Session();
-
 	private Webcam webcam = null;
 	private JPanel webcamSetupPanel = new JPanel();
 	private WebcamPanel webcamPreviewPanel = null;
 	private WebcamPicker webcamPicker = null;
 	private boolean webcamOK = false;
-
-	private final JLabel netHostName = new JLabel();
-	private final JLabel netAddress = new JLabel();
-	private final JLabel netNIFStatus = new JLabel();
-	private final JLabel netMAC = new JLabel();
 	private boolean networkOK = false;
-	// private InetAddress localAddress;
 
 	@Override
 	public void run() {
-		System.out.println("Preferences panel runs on " + Thread.currentThread().getName());
 		addWindowListener(this);
 
 		JButton sessionListButton = new JButton("Sessions");
@@ -87,51 +80,12 @@ public class Preferences extends JFrame implements Runnable, WebcamListener, Web
 		JPanel buttonsPanel = new JPanel();
 		buttonsPanel.setLayout(new FlowLayout());
 
-		// webcam
-
-		Webcam.addDiscoveryListener(this); // обработчик отключения-подключения
-		webcamPicker = new WebcamPicker();
-		webcamPicker.addItemListener(this);
-		webcam = webcamPicker.getSelectedWebcam();
-
-		webcam.setViewSize(new Dimension(320, 240));
-
-		webcamSetupPanel.setLayout(new BorderLayout());
-		webcamSetupPanel.setBorder(
-				BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black), "Web-camera settings "));
-
-		if (webcam != null) {
-			webcamOK = true;
-			if (webcamOK && networkOK) {
-				sessionListButton.setEnabled(true);
-			}
-
-			webcam.addWebcamListener(Preferences.this);
-			webcamPreviewPanel = new WebcamPanel(webcam, false);
-			webcamPreviewPanel.setFPSDisplayed(true);
-			webcamPreviewPanel.setDoubleBuffered(true);
-			webcamPreviewPanel.setImageSizeDisplayed(true);
-
-			webcamSetupPanel.add(webcamPicker, BorderLayout.NORTH);
-			webcamSetupPanel.add(webcamPreviewPanel, BorderLayout.CENTER);
-
-			Thread webcamPanelThread = new Thread() {
-				@Override
-				public void run() {
-					System.out.println("Camera runs on " + Thread.currentThread().getName());
-					webcamPreviewPanel.start();
-				}
-			};
-			webcamPanelThread.setDaemon(true);
-			webcamPanelThread.setName("preview panel on preferences window");
-			webcamPanelThread.setUncaughtExceptionHandler(this);
-			webcamPanelThread.start();
-
-		} else {
-			webcamSetupPanel.add(new JLabel("Webcam fault", SwingConstants.CENTER), BorderLayout.CENTER);
-		}
-
 		// network
+
+		JLabel netHostName = new JLabel();
+		JLabel netAddress = new JLabel();
+		JLabel netNIFStatus = new JLabel();
+		JLabel netMAC = new JLabel();
 
 		JPanel networkSetupPanel = new JPanel();
 		networkSetupPanel.setBorder(
@@ -205,6 +159,58 @@ public class Preferences extends JFrame implements Runnable, WebcamListener, Web
 		networkSetupPanel.add(netAddress);
 		networkSetupPanel.add(new JLabel(" MAC:"));
 		networkSetupPanel.add(netMAC);
+
+		// webcam
+
+		Webcam.addDiscoveryListener(this); // обработчик отключения-подключения
+		webcamPicker = new WebcamPicker();
+		webcamPicker.addItemListener(this);
+		webcam = webcamPicker.getSelectedWebcam();
+
+		webcam.setViewSize(new Dimension(320, 240));
+
+		webcamSetupPanel.setLayout(new BorderLayout());
+		webcamSetupPanel.setBorder(
+				BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black), "Web-camera settings "));
+
+		if (webcam != null) {
+
+			// Start stream server!
+
+			StreamServerAgent serverAgent = new StreamServerAgent(webcam, JavaEyeUtils.dimension);
+			InetSocketAddress myAddress = new InetSocketAddress(JavaEyeUtils.localAddress, 20000);
+			serverAgent.start(myAddress);
+			System.out.println("Stream server runs on port " + myAddress);
+
+			webcamOK = true;
+			if (webcamOK && networkOK) {
+				sessionListButton.setEnabled(true);
+			}
+
+			webcam.addWebcamListener(Preferences.this);
+			webcamPreviewPanel = new WebcamPanel(webcam, false);
+			webcamPreviewPanel.setFPSDisplayed(true);
+			webcamPreviewPanel.setDoubleBuffered(true);
+			webcamPreviewPanel.setImageSizeDisplayed(true);
+
+			webcamSetupPanel.add(webcamPicker, BorderLayout.NORTH);
+			webcamSetupPanel.add(webcamPreviewPanel, BorderLayout.CENTER);
+
+			Thread webcamPanelThread = new Thread() {
+				@Override
+				public void run() {
+					System.out.println("Camera runs on " + Thread.currentThread().getName());
+					webcamPreviewPanel.start();
+				}
+			};
+			webcamPanelThread.setDaemon(true);
+			webcamPanelThread.setName("preview panel on preferences window");
+			webcamPanelThread.setUncaughtExceptionHandler(this);
+			webcamPanelThread.start();
+
+		} else {
+			webcamSetupPanel.add(new JLabel("Webcam fault", SwingConstants.CENTER), BorderLayout.CENTER);
+		}
 
 		settingsPanel.add(webcamSetupPanel);
 		settingsPanel.add(networkSetupPanel);

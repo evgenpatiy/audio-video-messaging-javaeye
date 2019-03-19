@@ -44,10 +44,10 @@ public class ViewPanel extends JFrame implements Runnable {
 
 	@Override
 	public void run() {
+		System.out.println("ViewPanel runs on " + Thread.currentThread().getName());
 		setPreferredSize(new Dimension(320, 480));
 		view.setPreferredSize(videoDimension);
 		setTitle(viewTitle);
-		// setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		setLayout(new GridLayout(2, 0));
 
 		view.setBorder(BorderFactory.createLineBorder(Color.BLACK));

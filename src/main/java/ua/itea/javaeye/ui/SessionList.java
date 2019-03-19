@@ -17,14 +17,12 @@ import java.util.ArrayList;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
 import com.github.sarxos.webcam.Webcam;
 
 import ua.itea.javaeye.agent.StreamClientAgent;
-import ua.itea.javaeye.agent.StreamServerAgent;
 import ua.itea.javaeye.handler.StreamFrameListener;
 import ua.itea.javaeye.panels.LocalViewPanel;
 import ua.itea.javaeye.panels.RemoteViewPanel;
@@ -43,32 +41,29 @@ public class SessionList extends JFrame implements Runnable {
 	 */
 	private static final long serialVersionUID = 2307756360605280092L;
 	private final Webcam webcam;
-	private final JavaEyeUtils util = new JavaEyeUtils();
-	private DbWorker db = new DbWorker("javaeye.db");
-
-	protected LocalViewPanel localCam;
-	protected RemoteViewPanel remoteCam;
-
-	private final JPanel sessionButtonsPanel = new JPanel();
-	private final JPanel bottomButtonsPanel = new JPanel();
-	private final JButton sessionButton = new JButton();
-	private final JButton addSessionButton = new JButton("Session");
-	private final JLabel eyeLabel = new JLabel();
+	private final LocalViewPanel localCam;
+	private final RemoteViewPanel remoteCam;
 
 	SessionList(Webcam webcam) {
 		this.webcam = webcam;
-
 		this.localCam = new LocalViewPanel(webcam);
 		this.remoteCam = new RemoteViewPanel();
 	}
 
 	@Override
 	public void run() {
-		setResizable(false);
+		StreamClientAgent clientAgent = new StreamClientAgent(new StreamFrameListenerIMPL(), JavaEyeUtils.dimension);
+		JavaEyeUtils util = new JavaEyeUtils();
+		DbWorker db = new DbWorker("javaeye.db");
 
+		JPanel sessionButtonsPanel = new JPanel();
+		JPanel bottomButtonsPanel = new JPanel();
+		JButton addSessionButton = new JButton("Session");
+
+		setResizable(false);
 		sessionButtonsPanel.setLayout(new GridLayout(10, 1));
 
-		URL iconURL = getClass().getResource("/img/session.png");
+		URL iconURL = getClass().getResource("/img/eye.png");
 		ImageIcon icon = new ImageIcon(iconURL);
 
 		if (!db.isDbExists()) {
@@ -81,38 +76,34 @@ public class SessionList extends JFrame implements Runnable {
 				session.setIcon(icon);
 				session.addActionListener(event -> {
 					System.out.println(session);
+
+					remoteCam.setSession(session);
+					(new Thread(localCam)).start();
+					(new Thread(remoteCam)).start();
+
+					clientAgent.connect(new InetSocketAddress(session.getRemoteAddress(), 20000));
 				});
 				sessionButtonsPanel.add(session);
 			}
 		}
-
-		sessionButton.addActionListener(event -> {
-			(new Thread(localCam)).start();
-			(new Thread(remoteCam)).start();
-
-			StreamClientAgent clientAgent = new StreamClientAgent(new StreamFrameListenerIMPL(),
-					JavaEyeUtils.dimension);
-			// clientAgent.connect(new InetSocketAddress(remoteAddress.getText(), 20000));
-		});
 
 		System.out.println("SessionList runs on " + Thread.currentThread().getName());
 		setPreferredSize(new Dimension(200, 480));
 		setLayout(new BorderLayout());
 		setTitle("Session list");
 
-		bottomButtonsPanel.setLayout(new FlowLayout());
 		iconURL = getClass().getResource("/img/plus.png");
 		icon = new ImageIcon(iconURL);
 		addSessionButton.setIcon(icon);
 		addSessionButton.addActionListener(event -> {
-			(new Thread(new AddSession(sessionButtonsPanel))).start();
+			(new Thread(new AddSession(sessionButtonsPanel, webcam))).start();
 		});
-		bottomButtonsPanel.add(addSessionButton);
 
 		iconURL = getClass().getResource("/img/eye.png");
 		icon = new ImageIcon(iconURL);
-		eyeLabel.setIcon(icon);
-		bottomButtonsPanel.add(eyeLabel);
+
+		bottomButtonsPanel.setLayout(new FlowLayout());
+		bottomButtonsPanel.add(addSessionButton);
 
 		add(sessionButtonsPanel, BorderLayout.CENTER);
 		add(bottomButtonsPanel, BorderLayout.SOUTH);
@@ -122,13 +113,6 @@ public class SessionList extends JFrame implements Runnable {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		pack();
 		setVisible(true);
-
-		// Start stream server!
-
-		StreamServerAgent serverAgent = new StreamServerAgent(webcam, util.dimension);
-		InetSocketAddress myAddress = new InetSocketAddress(JavaEyeUtils.localAddress, 20000);
-		serverAgent.start(myAddress);
-		System.out.println("Stream server runs on port " + myAddress);
 	}
 
 	protected class StreamFrameListenerIMPL implements StreamFrameListener {

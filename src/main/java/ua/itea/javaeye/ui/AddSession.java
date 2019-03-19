@@ -6,7 +6,9 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.HeadlessException;
+import java.awt.image.BufferedImage;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.URL;
 import java.net.UnknownHostException;
 
@@ -18,7 +20,14 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 
+import com.github.sarxos.webcam.Webcam;
+
+import ua.itea.javaeye.agent.StreamClientAgent;
+import ua.itea.javaeye.handler.StreamFrameListener;
+import ua.itea.javaeye.panels.LocalViewPanel;
+import ua.itea.javaeye.panels.RemoteViewPanel;
 import ua.itea.javaeye.utils.DbWorker;
 import ua.itea.javaeye.utils.JavaEyeUtils;
 import ua.itea.javaeye.utils.Session;
@@ -29,15 +38,22 @@ public class AddSession extends JFrame implements Runnable {
 	 */
 	private static final long serialVersionUID = 7775937214872456459L;
 	private JPanel buttonsPanel;
+	private final Webcam webcam;
+	private final LocalViewPanel localCam;
+	private final RemoteViewPanel remoteCam;
 
-	protected AddSession(JPanel buttonsPanel) throws HeadlessException {
+	protected AddSession(JPanel buttonsPanel, Webcam webcam) throws HeadlessException {
 		this.buttonsPanel = buttonsPanel;
+
+		this.webcam = webcam;
+		this.localCam = new LocalViewPanel(webcam);
+		this.remoteCam = new RemoteViewPanel();
 	}
 
 	@Override
 	public void run() {
-
 		DbWorker db = new DbWorker("javaeye.db");
+		StreamClientAgent clientAgent = new StreamClientAgent(new StreamFrameListenerIMPL(), JavaEyeUtils.dimension);
 
 		JPanel inputPanel = new JPanel();
 		JTextField nameTextField = new JTextField();
@@ -69,20 +85,26 @@ public class AddSession extends JFrame implements Runnable {
 					e.printStackTrace();
 				}
 
+				session.setHorizontalAlignment(SwingConstants.LEFT);
+				URL iconURL = getClass().getResource("/img/eye.png");
+				ImageIcon icon = new ImageIcon(iconURL);
+				session.setIcon(icon);
 				session.setText(nameTextField.getText());
-
-				// System.out.println(session);
 				db.writeSessionToDb(session);
 
-				session.setText(nameTextField.getText());
 				session.addActionListener(newSessionEvent -> {
 					System.out.println(session);
+
+					remoteCam.setSession(session);
+					(new Thread(localCam)).start();
+					(new Thread(remoteCam)).start();
+
+					clientAgent.connect(new InetSocketAddress(session.getRemoteAddress(), 20000));
 				});
 
 				buttonsPanel.add(session);
 				buttonsPanel.revalidate();
 				dispose();
-
 			}
 		});
 
@@ -111,5 +133,15 @@ public class AddSession extends JFrame implements Runnable {
 		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		pack();
 		setVisible(true);
+	}
+
+	protected class StreamFrameListenerIMPL implements StreamFrameListener {
+		private volatile long count = 0;
+
+		@Override
+		public void onFrameReceived(BufferedImage image) {
+			remoteCam.updateImage(image);
+		}
+
 	}
 }
