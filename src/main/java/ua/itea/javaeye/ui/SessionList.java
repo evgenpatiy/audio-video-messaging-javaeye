@@ -75,13 +75,11 @@ public class SessionList extends JFrame implements Runnable {
 				session.setHorizontalAlignment(SwingConstants.LEFT);
 				session.setIcon(icon);
 				session.addActionListener(event -> {
-					System.out.println(session);
 					remoteCam.setSession(session);
-
 					(new Thread(localCam)).start();
 					(new Thread(remoteCam)).start();
 
-					clientAgent.connect(new InetSocketAddress(session.getRemoteAddress(), 20000));
+					clientAgent.connect(new InetSocketAddress(session.getRemoteAddress(), JavaEyeUtils.streamServerPort));
 				});
 				sessionButtonsPanel.add(session);
 			}

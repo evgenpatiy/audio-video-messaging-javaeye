@@ -157,6 +157,8 @@ public class Preferences extends JFrame implements Runnable, WebcamListener, Web
 		networkSetupPanel.add(netAddress);
 		networkSetupPanel.add(new JLabel(" MAC:"));
 		networkSetupPanel.add(netMAC);
+		networkSetupPanel.add(new JLabel(" Stream port:"));
+		networkSetupPanel.add(new JLabel(String.valueOf(JavaEyeUtils.streamServerPort)));
 
 		// webcam
 
@@ -176,7 +178,8 @@ public class Preferences extends JFrame implements Runnable, WebcamListener, Web
 			// Start stream server!
 
 			StreamServerAgent serverAgent = new StreamServerAgent(webcam, JavaEyeUtils.dimension);
-			InetSocketAddress myAddress = new InetSocketAddress(JavaEyeUtils.localAddress, 20000);
+			InetSocketAddress myAddress = new InetSocketAddress(JavaEyeUtils.localAddress,
+					JavaEyeUtils.streamServerPort);
 			serverAgent.start(myAddress);
 
 			webcamOK = true;

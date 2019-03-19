@@ -93,13 +93,11 @@ public class AddSession extends JFrame implements Runnable {
 				db.writeSessionToDb(session);
 
 				session.addActionListener(newSessionEvent -> {
-					System.out.println(session);
-
 					remoteCam.setSession(session);
 					(new Thread(localCam)).start();
 					(new Thread(remoteCam)).start();
 
-					clientAgent.connect(new InetSocketAddress(session.getRemoteAddress(), 20000));
+					clientAgent.connect(new InetSocketAddress(session.getRemoteAddress(), JavaEyeUtils.streamServerPort));
 				});
 
 				buttonsPanel.add(session);

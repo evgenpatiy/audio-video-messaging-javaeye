@@ -55,16 +55,17 @@ public class RemoteViewPanel extends ViewPanel implements Runnable {
 
 	@Override
 	public void showInfoPanel() {
-		System.out.println("RemoteView runs on " + Thread.currentThread().getName());
-
-		info.add(new JLabel(" Remote name: "));
-		info.add(new JLabel(session.getRemoteName()));
-		info.add(new JLabel(" Remote IP: "));
-		info.add(new JLabel(session.getRemoteAddress().getHostAddress()));
-		info.add(new JLabel(" View resolution:"));
-		info.add(new JLabel((int) JavaEyeUtils.dimension.getWidth() + "x" + (int) JavaEyeUtils.dimension.getHeight()));
-		info.add(new JLabel(" Codec: "));
-		info.add(new JLabel("H.264"));
+		if (info.getComponentCount() == 0) {
+			info.add(new JLabel(" Remote name: "));
+			info.add(new JLabel(session.getRemoteName()));
+			info.add(new JLabel(" Remote IP: "));
+			info.add(new JLabel(session.getRemoteAddress().getHostAddress()));
+			info.add(new JLabel(" View resolution:"));
+			info.add(new JLabel(
+					(int) JavaEyeUtils.dimension.getWidth() + "x" + (int) JavaEyeUtils.dimension.getHeight()));
+			info.add(new JLabel(" Video Codec: "));
+			info.add(new JLabel("H.264"));
+		}
 	}
 
 }

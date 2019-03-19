@@ -53,21 +53,22 @@ public class LocalViewPanel extends ViewPanel implements Runnable {
 
 	@Override
 	public void showInfoPanel() {
-		System.out.println("LocalView runs on " + Thread.currentThread().getName());
-
 		webcamFPSLabel.setText(String.format("%4.2f", webcam.getFPS()));
 		webcamResolutionLabel
 				.setText((int) webcam.getViewSize().getWidth() + "x" + (int) webcam.getViewSize().getHeight());
 
-		info.add(new JLabel(" Webcam: "));
-		info.add(new JLabel(webcam.getName()));
-		info.add(new JLabel(" Webcam FPS: "));
-		info.add(webcamFPSLabel);
-		info.add(new JLabel(" View resolution:"));
-		info.add(webcamResolutionLabel);
-		info.add(new JLabel(" Local IP: "));
-		info.add(new JLabel(JavaEyeUtils.localAddress.getHostAddress()));
-		info.add(new JLabel(" Codec: "));
-		info.add(new JLabel("H.264"));
+		if (info.getComponentCount() == 0) {
+
+			info.add(new JLabel(" Webcam: "));
+			info.add(new JLabel(webcam.getName()));
+			info.add(new JLabel(" Webcam FPS: "));
+			info.add(webcamFPSLabel);
+			info.add(new JLabel(" View resolution:"));
+			info.add(webcamResolutionLabel);
+			info.add(new JLabel(" Local IP: "));
+			info.add(new JLabel(JavaEyeUtils.localAddress.getHostAddress()));
+			info.add(new JLabel(" Video Codec: "));
+			info.add(new JLabel("H.264"));
+		}
 	}
 }
