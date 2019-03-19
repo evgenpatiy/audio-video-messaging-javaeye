@@ -79,7 +79,8 @@ public class StreamServerAgent implements IStreamServerAgent {
 		@Override
 		public void onClientConnectedIn(Channel channel) {
 
-			JOptionPane.showMessageDialog(null, "Incoming connection!");
+			JOptionPane.showMessageDialog(null,
+					"Incoming connection from" + System.lineSeparator() + channel.getRemoteAddress().toString());
 			// here we just start to stream when the first client connected in
 			channelGroup.add(channel);
 			if (!isStreaming) {
