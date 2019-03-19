@@ -67,7 +67,7 @@ public class StreamServerAgent implements IStreamServerAgent {
 
 	@Override
 	public void stop() {
-		System.out.println("server is stopping");
+		System.out.println("server stopping...");
 		channelGroup.close();
 		timeWorker.shutdown();
 		encodeWorker.shutdown();
@@ -92,9 +92,7 @@ public class StreamServerAgent implements IStreamServerAgent {
 				isStreaming = true;
 			}
 			System.out.println("current connected clients : " + channelGroup.size());
-
 			SocketAddress remote = channel.getRemoteAddress();
-
 			System.out.println("Remote peer connected, remote IP: " + remote);
 		}
 

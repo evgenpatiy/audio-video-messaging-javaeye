@@ -162,7 +162,7 @@ public class Preferences extends JFrame implements Runnable, WebcamListener, Web
 
 		// webcam
 
-		Webcam.addDiscoveryListener(this); // обработчик отключения-подключения
+		Webcam.addDiscoveryListener(this); // webcam connect-disconnect
 		webcamPicker = new WebcamPicker();
 		webcamPicker.addItemListener(this);
 		webcam = webcamPicker.getSelectedWebcam();
@@ -180,7 +180,6 @@ public class Preferences extends JFrame implements Runnable, WebcamListener, Web
 			StreamServerAgent serverAgent = new StreamServerAgent(webcam, JavaEyeUtils.dimension);
 			InetSocketAddress myAddress = new InetSocketAddress(JavaEyeUtils.localAddress, 20000);
 			serverAgent.start(myAddress);
-			System.out.println("Stream server runs on port " + myAddress);
 
 			webcamOK = true;
 			if (webcamOK && networkOK) {
