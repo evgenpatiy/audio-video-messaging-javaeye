@@ -15,8 +15,6 @@ import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.github.sarxos.webcam.Webcam;
 
@@ -25,13 +23,10 @@ import ua.itea.javaeye.handler.H264Encoder;
 import ua.itea.javaeye.handler.StreamServerListener;
 
 public class StreamServerAgent implements IStreamServerAgent {
-	protected final static Logger logger = LoggerFactory.getLogger(StreamServerAgent.class);
 	protected final Webcam webcam;
 	protected final Dimension dimension;
 	protected final ChannelGroup channelGroup = new DefaultChannelGroup();
 	protected final ServerBootstrap serverBootstrap;
-	// I just move the stream encoder out of the channel pipeline for the
-	// performance
 	protected final H264Encoder h264StreamEncoder;
 	protected volatile boolean isStreaming;
 	protected ScheduledExecutorService timeWorker;
@@ -63,14 +58,14 @@ public class StreamServerAgent implements IStreamServerAgent {
 
 	@Override
 	public void start(SocketAddress streamAddress) {
-		logger.info("Server started :{}", streamAddress);
+		System.out.println("Server started : " + streamAddress);
 		Channel channel = serverBootstrap.bind(streamAddress);
 		channelGroup.add(channel);
 	}
 
 	@Override
 	public void stop() {
-		logger.info("server is stoping");
+		System.out.println("server is stopping");
 		channelGroup.close();
 		timeWorker.shutdown();
 		encodeWorker.shutdown();
@@ -82,7 +77,6 @@ public class StreamServerAgent implements IStreamServerAgent {
 		@Override
 		public void onClientConnectedIn(Channel channel) {
 			// here we just start to stream when the first client connected in
-			//
 			channelGroup.add(channel);
 			if (!isStreaming) {
 				// do some thing
@@ -92,7 +86,7 @@ public class StreamServerAgent implements IStreamServerAgent {
 				imageGrabTaskFuture = imageGrabFuture;
 				isStreaming = true;
 			}
-			logger.info("current connected clients :{}", channelGroup.size());
+			System.out.println("current connected clients : " + channelGroup.size());
 
 			SocketAddress remote = channel.getRemoteAddress();
 
@@ -103,12 +97,12 @@ public class StreamServerAgent implements IStreamServerAgent {
 		public void onClientDisconnected(Channel channel) {
 			channelGroup.remove(channel);
 			int size = channelGroup.size();
-			logger.info("current connected clients :{}", size);
+			System.out.println("current connected clients : " + size);
 			if (size == 1) {
 				// cancel the task
 				imageGrabTaskFuture.cancel(false);
-				webcam.close();
-				isStreaming = false;
+				// webcam.close();
+				// isStreaming = false;
 			}
 			System.out.println("Remote peer disconnected, remote IP: " + channel.getRemoteAddress());
 		}
@@ -118,7 +112,7 @@ public class StreamServerAgent implements IStreamServerAgent {
 			channelGroup.remove(channel);
 			channel.close();
 			int size = channelGroup.size();
-			logger.info("current connected clients :{}", size);
+			System.out.println("current connected clients : " + size);
 			if (size == 1) {
 				// cancel the task
 				imageGrabTaskFuture.cancel(false);
@@ -135,7 +129,7 @@ public class StreamServerAgent implements IStreamServerAgent {
 
 			@Override
 			public void run() {
-				logger.info("image grabed ,count :{}", frameCount++);
+				System.out.println("image grabed ,count : " + frameCount++);
 				BufferedImage bufferedImage = webcam.getImage();
 				/**
 				 * using this when the h264 encoder is added to the pipeline
