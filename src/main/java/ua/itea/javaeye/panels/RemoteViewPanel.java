@@ -31,6 +31,7 @@ public class RemoteViewPanel extends ViewPanel implements Runnable {
 
 		setView(videoPanel);
 		viewTitle = "Remote cam view";
+
 	}
 
 	public void setSession(Session session) {
@@ -48,7 +49,12 @@ public class RemoteViewPanel extends ViewPanel implements Runnable {
 
 	@Override
 	public void run() {
-		super.run();
+		createViewPanel();
+		showInfoPanel();
+	}
+
+	@Override
+	public void showInfoPanel() {
 		System.out.println("RemoteView runs on " + Thread.currentThread().getName());
 
 		info.add(new JLabel(" Remote name: "));

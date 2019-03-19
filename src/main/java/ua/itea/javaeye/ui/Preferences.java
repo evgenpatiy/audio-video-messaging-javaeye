@@ -90,7 +90,7 @@ public class Preferences extends JFrame implements Runnable, WebcamListener, Web
 		JPanel networkSetupPanel = new JPanel();
 		networkSetupPanel.setBorder(
 				BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black), "Network settings "));
-		networkSetupPanel.setLayout(new GridLayout(5, 2));
+		networkSetupPanel.setLayout(new GridLayout(7, 2));
 
 		JComboBox<NetworkInterface> netNIF = new JComboBox<NetworkInterface>();
 		netNIF.addActionListener(new ActionListener() {
@@ -221,7 +221,7 @@ public class Preferences extends JFrame implements Runnable, WebcamListener, Web
 		setLayout(new BorderLayout());
 		add(settingsPanel, BorderLayout.CENTER);
 		add(buttonsPanel, BorderLayout.SOUTH);
-		setPreferredSize(new Dimension(300, 500));
+		setPreferredSize(new Dimension(320, 610));
 		setTitle("JavaEye");
 
 		URL iconURL = getClass().getResource("/img/eye.png");

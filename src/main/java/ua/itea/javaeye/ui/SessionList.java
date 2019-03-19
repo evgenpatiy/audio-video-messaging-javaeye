@@ -76,8 +76,8 @@ public class SessionList extends JFrame implements Runnable {
 				session.setIcon(icon);
 				session.addActionListener(event -> {
 					System.out.println(session);
-
 					remoteCam.setSession(session);
+
 					(new Thread(localCam)).start();
 					(new Thread(remoteCam)).start();
 

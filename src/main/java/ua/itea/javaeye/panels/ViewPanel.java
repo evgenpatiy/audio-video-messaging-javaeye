@@ -21,7 +21,7 @@ import ua.itea.javaeye.utils.Session;
  *
  * @author yevgen
  */
-public class ViewPanel extends JFrame implements Runnable {
+public abstract class ViewPanel extends JFrame {
 
 	/**
 	 * 
@@ -36,24 +36,20 @@ public class ViewPanel extends JFrame implements Runnable {
 	protected void setSession(Session session) {
 		this.videoDimension = new Dimension(320, 240);
 		this.session = session;
+		createViewPanel();
+
 	}
 
-	public void setView(JPanel view) {
-		this.view = view;
-	}
-
-	@Override
-	public void run() {
-		System.out.println("ViewPanel runs on " + Thread.currentThread().getName());
+	public void createViewPanel() {
 		setPreferredSize(new Dimension(320, 480));
 		view.setPreferredSize(videoDimension);
 		setTitle(viewTitle);
-		setLayout(new GridLayout(2, 0));
+		setLayout(new GridLayout(2, 1));
 
 		view.setBorder(BorderFactory.createLineBorder(Color.BLACK));
 		info.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.BLACK), "Information "));
 
-		info.setLayout(new GridLayout(0, 2));
+		info.setLayout(new GridLayout(7, 2));
 
 		add(view);
 		add(info);
@@ -66,4 +62,9 @@ public class ViewPanel extends JFrame implements Runnable {
 		setVisible(true);
 	}
 
+	public abstract void showInfoPanel();
+
+	public void setView(JPanel view) {
+		this.view = view;
+	}
 }

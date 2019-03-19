@@ -34,11 +34,25 @@ public class LocalViewPanel extends ViewPanel implements Runnable {
 		webcamPanel.setDoubleBuffered(true);
 		setView(webcamPanel);
 		viewTitle = "Local cam view";
+
 	}
 
 	@Override
 	public void run() {
-		super.run();
+		createViewPanel();
+		showInfoPanel();
+
+		while (true) {
+			try {
+				Thread.sleep(500);
+				webcamFPSLabel.setText(String.format("%4.2f", webcam.getFPS()));
+			} catch (InterruptedException e) {
+			}
+		}
+	}
+
+	@Override
+	public void showInfoPanel() {
 		System.out.println("LocalView runs on " + Thread.currentThread().getName());
 
 		webcamFPSLabel.setText(String.format("%4.2f", webcam.getFPS()));
@@ -55,13 +69,5 @@ public class LocalViewPanel extends ViewPanel implements Runnable {
 		info.add(new JLabel(JavaEyeUtils.localAddress.getHostAddress()));
 		info.add(new JLabel(" Codec: "));
 		info.add(new JLabel("H.264"));
-
-		while (true) {
-			try {
-				Thread.sleep(500);
-				webcamFPSLabel.setText(String.format("%4.2f", webcam.getFPS()));
-			} catch (InterruptedException e) {
-			}
-		}
 	}
 }
