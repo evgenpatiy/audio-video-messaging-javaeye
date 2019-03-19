@@ -64,8 +64,6 @@ public class Preferences extends JFrame implements Runnable, WebcamListener, Web
 
 		JButton sessionListButton = new JButton("Sessions");
 		sessionListButton.addActionListener(event -> {
-			setVisible(false);
-			dispose();
 			(new Thread(new SessionList(webcam))).start();
 		});
 
