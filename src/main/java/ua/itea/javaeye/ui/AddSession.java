@@ -20,7 +20,6 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import javax.swing.SwingConstants;
 
 import com.github.sarxos.webcam.Webcam;
 
@@ -85,14 +84,10 @@ public class AddSession extends JFrame implements Runnable {
 					e.printStackTrace();
 				}
 
-				session.setHorizontalAlignment(SwingConstants.LEFT);
-				URL iconURL = getClass().getResource("/img/eye.png");
-				ImageIcon icon = new ImageIcon(iconURL);
-				session.setIcon(icon);
-				session.setText(nameTextField.getText());
-				db.writeSessionToDb(session);
+				db.addSession(session);
 
-				session.addActionListener(newSessionEvent -> {
+				session.sessionButton.setText(nameTextField.getText());
+				session.sessionButton.addActionListener(newSessionEvent -> {
 					remoteCam.setSession(session);
 					(new Thread(localCam)).start();
 					(new Thread(remoteCam)).start();

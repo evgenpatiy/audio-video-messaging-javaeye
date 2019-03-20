@@ -35,7 +35,7 @@ public class DbWorker {
 		return dbFile.exists() && dbFile.isFile();
 	}
 
-	public void writeSessionToDb(Session session) {
+	public void addSession(Session session) {
 		try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + dbName)) {
 			String sql = "INSERT INTO 'sessions' (name, localaddress, remoteaddress) VALUES (?, ?, ?);";
 			pst = conn.prepareStatement(sql);
