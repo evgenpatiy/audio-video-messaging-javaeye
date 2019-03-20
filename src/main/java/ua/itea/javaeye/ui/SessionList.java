@@ -59,12 +59,10 @@ public class SessionList extends JFrame implements Runnable {
 		ArrayList<Session> sessionList = db.getSessionsList();
 		sessionButtonsPanel.removeAll();
 		for (Session session : sessionList) {
-			session.sessionButton.addActionListener(event -> {
-				new SessionWorker().runSession(session);
-			});
-			session.deleteSessionButton.addActionListener(event -> {
-				new SessionWorker().deleteSession(session.getId());
-			});
+			session.sessionButton.addActionListener(event -> new SessionWorker().runSession(session));
+			session.editSessionButton.addActionListener(event -> new SessionWorker().editSession(session));
+			session.deleteSessionButton.addActionListener(event -> new SessionWorker().deleteSession(session));
+
 			sessionButtonsPanel.add(session);
 		}
 		sessionButtonsPanel.revalidate();
@@ -153,13 +151,48 @@ public class SessionList extends JFrame implements Runnable {
 			});
 		}
 
-		public void deleteSession(int id) {
-			if (JOptionPane.showConfirmDialog(null, "You're about to delete session!", "Warning",
+		public void editSession(Session editSession) {
+			setWindowTitle("Edit session");
+			setOkButton("Update");
+
+			getNameTextField().setText(editSession.getRemoteName());
+			getAddressTextField().setText(editSession.getRemoteAddress().getHostAddress());
+			createAddEditWindow();
+
+			okButton.addActionListener(event -> {
+				Session session = new Session();
+				session.setId(editSession.getId());
+
+				if (getNameTextField().getText().isEmpty()) {
+					JOptionPane.showMessageDialog(null, "Session couldn't be empty", "Session name error",
+							JOptionPane.ERROR_MESSAGE);
+				} else if (!JavaEyeUtils.validIP(getAddressTextField().getText())) {
+					JOptionPane.showMessageDialog(null, "Provide correct remote IP", "Session address error",
+							JOptionPane.ERROR_MESSAGE);
+				} else {
+					session.setLocalAddress(JavaEyeUtils.localAddress);
+					session.setRemoteName(getNameTextField().getText());
+					try {
+						session.setRemoteAddress(InetAddress.getByName(getAddressTextField().getText()));
+					} catch (UnknownHostException e) {
+						e.printStackTrace();
+					}
+
+					dispose();
+					System.out.println("edit from class " + session);
+					db.editSession(session);
+					updateSessionList();
+				}
+			});
+		}
+
+		public void deleteSession(Session deleteSession) {
+			if (JOptionPane.showConfirmDialog(null,
+					"You're about to delete session " + deleteSession.getRemoteName() + "!", "Warning",
 					JOptionPane.YES_NO_OPTION) == 0) {
-				db.deleteSession(id);
+				db.deleteSession(deleteSession);
 				updateSessionList();
 			}
-
 		}
 	}
 
@@ -170,6 +203,5 @@ public class SessionList extends JFrame implements Runnable {
 		public void onFrameReceived(BufferedImage image) {
 			remoteCam.updateImage(image);
 		}
-
 	}
 }

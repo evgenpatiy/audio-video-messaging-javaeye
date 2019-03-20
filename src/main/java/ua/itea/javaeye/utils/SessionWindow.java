@@ -34,6 +34,14 @@ public class SessionWindow extends JFrame {
 		this.okButton.setText(okButtonText);
 	}
 
+	public void setNameTextField(JTextField nameTextField) {
+		this.nameTextField = nameTextField;
+	}
+
+	public void setAddressTextField(JTextField addressTextField) {
+		this.addressTextField = addressTextField;
+	}
+
 	public JTextField getNameTextField() {
 		return nameTextField;
 	}

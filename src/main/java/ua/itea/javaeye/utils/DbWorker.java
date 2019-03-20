@@ -50,12 +50,28 @@ public class DbWorker {
 		}
 	}
 
-	public void deleteSession(int id) {
+	public void editSession(Session session) {
+		try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + dbName)) {
+			String sql = "UPDATE 'sessions' SET name=?, localaddress=?, remoteaddress=? WHERE id=?;";
+			pst = conn.prepareStatement(sql);
+
+			pst.setString(1, session.getRemoteName());
+			pst.setString(2, session.getLocalAddress().getHostAddress());
+			pst.setString(3, session.getRemoteAddress().getHostAddress());
+			pst.setInt(4, session.getId());
+			pst.executeUpdate();
+		} catch (SQLException e) {
+			JOptionPane.showMessageDialog(null, "Writing data to database error", "SQL error",
+					JOptionPane.ERROR_MESSAGE);
+		}
+	}
+
+	public void deleteSession(Session session) {
 		try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + dbName)) {
 			String sql = "DELETE FROM 'sessions' WHERE id=?;";
 			pst = conn.prepareStatement(sql);
 
-			pst.setInt(1, id);
+			pst.setInt(1, session.getId());
 			pst.executeUpdate();
 		} catch (SQLException e) {
 			JOptionPane.showMessageDialog(null, "Deleting data from database error", "SQL error",
