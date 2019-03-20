@@ -20,6 +20,7 @@ public class Session extends JLabel {
 	private InetAddress localAddress;
 	private InetAddress remoteAddress;
 	private String remoteName;
+	private int id;
 
 	public JButton sessionButton = new JButton();
 	public JButton editSessionButton = new JButton();
@@ -51,6 +52,14 @@ public class Session extends JLabel {
 		add(sessionButton, BorderLayout.CENTER);
 		add(rightButtonsPanel, BorderLayout.EAST);
 		this.setBorder(BorderFactory.createLoweredBevelBorder());
+	}
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
 	}
 
 	public InetAddress getLocalAddress() {

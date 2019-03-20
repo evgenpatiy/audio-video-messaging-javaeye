@@ -50,19 +50,17 @@ public class DbWorker {
 		}
 	}
 
-	public int getMaxId() {
-		int max = 0;
+	public void deleteSession(int id) {
 		try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + dbName)) {
-			String sql = "SELECT MAX(id) FROM sessions;";
+			String sql = "DELETE FROM 'sessions' WHERE id=?;";
 			pst = conn.prepareStatement(sql);
-			rs = pst.executeQuery();
-			max = rs.getInt(1);
 
+			pst.setInt(1, id);
+			pst.executeUpdate();
 		} catch (SQLException e) {
-			e.printStackTrace();
+			JOptionPane.showMessageDialog(null, "Deleting data from database error", "SQL error",
+					JOptionPane.ERROR_MESSAGE);
 		}
-
-		return max;
 	}
 
 	public ArrayList<Session> getSessionsList() {
@@ -76,6 +74,7 @@ public class DbWorker {
 			while (rs.next()) {
 				Session session = new Session();
 
+				session.setId(rs.getInt("id"));
 				session.setRemoteName(rs.getString("name"));
 				session.setLocalAddress(InetAddress.getByName(rs.getString("localaddress")));
 				session.setRemoteAddress(InetAddress.getByName(rs.getString("remoteaddress")));

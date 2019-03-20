@@ -42,7 +42,7 @@ public class SessionWindow extends JFrame {
 		return addressTextField;
 	}
 
-	protected void createWindow() {
+	protected void createAddEditWindow() {
 		JPanel inputPanel = new JPanel();
 
 		inputPanel.setLayout(new GridLayout(2, 2));

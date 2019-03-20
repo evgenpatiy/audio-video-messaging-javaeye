@@ -60,12 +60,15 @@ public class SessionList extends JFrame implements Runnable {
 		sessionButtonsPanel.removeAll();
 		for (Session session : sessionList) {
 			session.sessionButton.addActionListener(event -> {
-				// remoteCam.setSession(session);
-				runSession(session);
+				new SessionWorker().runSession(session);
+			});
+			session.deleteSessionButton.addActionListener(event -> {
+				new SessionWorker().deleteSession(session.getId());
 			});
 			sessionButtonsPanel.add(session);
 		}
 		sessionButtonsPanel.revalidate();
+		sessionButtonsPanel.repaint();
 	}
 
 	@Override
@@ -111,20 +114,20 @@ public class SessionList extends JFrame implements Runnable {
 		setVisible(true);
 	}
 
-	private void runSession(Session runSession) {
-		remoteCam.setSession(runSession);
-		(new Thread(localCam)).start();
-		(new Thread(remoteCam)).start();
-		videoClient.connect(new InetSocketAddress(runSession.getRemoteAddress(), JavaEyeUtils.streamServerPort));
-	}
-
 	private class SessionWorker extends SessionWindow {
 		private static final long serialVersionUID = 5392077596526562854L;
+
+		public void runSession(Session runSession) {
+			remoteCam.setSession(runSession);
+			(new Thread(localCam)).start();
+			(new Thread(remoteCam)).start();
+			videoClient.connect(new InetSocketAddress(runSession.getRemoteAddress(), JavaEyeUtils.streamServerPort));
+		}
 
 		public void addSession() {
 			setWindowTitle("New session");
 			setOkButton("Add");
-			createWindow();
+			createAddEditWindow();
 
 			okButton.addActionListener(event -> {
 				Session session = new Session();
@@ -148,6 +151,15 @@ public class SessionList extends JFrame implements Runnable {
 					updateSessionList();
 				}
 			});
+		}
+
+		public void deleteSession(int id) {
+			if (JOptionPane.showConfirmDialog(null, "You're about to delete session!", "Warning",
+					JOptionPane.YES_NO_OPTION) == 0) {
+				db.deleteSession(id);
+				updateSessionList();
+			}
+
 		}
 	}
 
