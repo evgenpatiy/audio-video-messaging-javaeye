@@ -24,10 +24,10 @@ import javax.swing.SwingConstants;
 
 import com.github.sarxos.webcam.Webcam;
 
-import ua.itea.javaeye.agent.StreamClientAgent;
 import ua.itea.javaeye.handler.StreamFrameListener;
 import ua.itea.javaeye.panels.LocalViewPanel;
 import ua.itea.javaeye.panels.RemoteViewPanel;
+import ua.itea.javaeye.stream.VideoStreamClient;
 import ua.itea.javaeye.utils.DbWorker;
 import ua.itea.javaeye.utils.JavaEyeUtils;
 import ua.itea.javaeye.utils.Session;
@@ -53,7 +53,7 @@ public class AddSession extends JFrame implements Runnable {
 	@Override
 	public void run() {
 		DbWorker db = new DbWorker("javaeye.db");
-		StreamClientAgent clientAgent = new StreamClientAgent(new StreamFrameListenerIMPL(), JavaEyeUtils.dimension);
+		VideoStreamClient videoClient = new VideoStreamClient(new StreamFrameListenerIMPL(), JavaEyeUtils.dimension);
 
 		JPanel inputPanel = new JPanel();
 		JTextField nameTextField = new JTextField();
@@ -97,7 +97,8 @@ public class AddSession extends JFrame implements Runnable {
 					(new Thread(localCam)).start();
 					(new Thread(remoteCam)).start();
 
-					clientAgent.connect(new InetSocketAddress(session.getRemoteAddress(), JavaEyeUtils.streamServerPort));
+					videoClient
+							.connect(new InetSocketAddress(session.getRemoteAddress(), JavaEyeUtils.streamServerPort));
 				});
 
 				buttonsPanel.add(session);

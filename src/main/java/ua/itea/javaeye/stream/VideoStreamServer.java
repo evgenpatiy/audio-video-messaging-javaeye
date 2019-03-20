@@ -1,4 +1,4 @@
-package ua.itea.javaeye.agent;
+package ua.itea.javaeye.stream;
 
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
@@ -24,7 +24,7 @@ import ua.itea.javaeye.channel.StreamServerChannelPipelineFactory;
 import ua.itea.javaeye.handler.H264Encoder;
 import ua.itea.javaeye.handler.StreamServerListener;
 
-public class StreamServerAgent implements IStreamServerAgent {
+public class VideoStreamServer implements IVideoStreamServer {
 	protected final Webcam webcam;
 	protected final Dimension dimension;
 	protected final ChannelGroup channelGroup = new DefaultChannelGroup();
@@ -36,7 +36,7 @@ public class StreamServerAgent implements IStreamServerAgent {
 	protected int FPS = 25;
 	protected ScheduledFuture<?> imageGrabTaskFuture;
 
-	public StreamServerAgent(Webcam webcam, Dimension dimension) {
+	public VideoStreamServer(Webcam webcam, Dimension dimension) {
 		super();
 		this.webcam = webcam;
 		this.dimension = dimension;

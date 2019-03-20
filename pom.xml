@@ -61,7 +61,6 @@
 				<directory>src/main/resources</directory>
 				<includes>
 					<include>**/*.png</include>
-					<include>**/*.ttf</include>
 				</includes>
 			</resource>
 		</resources>

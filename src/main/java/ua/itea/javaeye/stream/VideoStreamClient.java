@@ -1,4 +1,4 @@
-package ua.itea.javaeye.agent;
+package ua.itea.javaeye.stream;
 
 import java.awt.Dimension;
 import java.net.SocketAddress;
@@ -14,15 +14,15 @@ import ua.itea.javaeye.channel.StreamClientChannelPipelineFactory;
 import ua.itea.javaeye.handler.StreamClientListener;
 import ua.itea.javaeye.handler.StreamFrameListener;
 
-public class StreamClientAgent implements IStreamClientAgent {
-	protected final static Logger logger = LoggerFactory.getLogger(StreamClientAgent.class);
+public class VideoStreamClient implements IVideoStreamClient {
+	protected final static Logger logger = LoggerFactory.getLogger(VideoStreamClient.class);
 	protected final ClientBootstrap clientBootstrap;
 	protected final StreamClientListener streamClientListener;
 	protected final StreamFrameListener streamFrameListener;
 	protected final Dimension dimension;
 	protected Channel clientChannel;
 
-	public StreamClientAgent(StreamFrameListener streamFrameListener, Dimension dimension) {
+	public VideoStreamClient(StreamFrameListener streamFrameListener, Dimension dimension) {
 		super();
 		this.dimension = dimension;
 		this.clientBootstrap = new ClientBootstrap();

@@ -41,7 +41,7 @@ import com.github.sarxos.webcam.WebcamListener;
 import com.github.sarxos.webcam.WebcamPanel;
 import com.github.sarxos.webcam.WebcamPicker;
 
-import ua.itea.javaeye.agent.StreamServerAgent;
+import ua.itea.javaeye.stream.VideoStreamServer;
 import ua.itea.javaeye.utils.JavaEyeUtils;
 
 public class Preferences extends JFrame implements Runnable, WebcamListener, WebcamDiscoveryListener, ItemListener,
@@ -177,10 +177,10 @@ public class Preferences extends JFrame implements Runnable, WebcamListener, Web
 
 			// Start stream server!
 
-			StreamServerAgent serverAgent = new StreamServerAgent(webcam, JavaEyeUtils.dimension);
+			VideoStreamServer videoServer = new VideoStreamServer(webcam, JavaEyeUtils.dimension);
 			InetSocketAddress myAddress = new InetSocketAddress(JavaEyeUtils.localAddress,
 					JavaEyeUtils.streamServerPort);
-			serverAgent.start(myAddress);
+			videoServer.start(myAddress);
 
 			webcamOK = true;
 			if (webcamOK && networkOK) {

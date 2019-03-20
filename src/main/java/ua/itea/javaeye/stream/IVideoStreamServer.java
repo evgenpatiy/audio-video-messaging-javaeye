@@ -1,8 +1,8 @@
-package ua.itea.javaeye.agent;
+package ua.itea.javaeye.stream;
 
 import java.net.SocketAddress;
 
-public interface IStreamServerAgent {
+public interface IVideoStreamServer {
 	public void start(SocketAddress streamAddress);
 	public void stop();
 }
