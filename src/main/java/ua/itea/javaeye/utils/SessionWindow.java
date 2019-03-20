@@ -15,7 +15,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-public class SessionElement extends JFrame {
+public class SessionWindow extends JFrame {
 
 	/**
 	 * 

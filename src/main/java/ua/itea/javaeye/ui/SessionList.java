@@ -10,13 +10,16 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.image.BufferedImage;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 import com.github.sarxos.webcam.Webcam;
@@ -28,7 +31,7 @@ import ua.itea.javaeye.stream.VideoStreamClient;
 import ua.itea.javaeye.utils.DbWorker;
 import ua.itea.javaeye.utils.JavaEyeUtils;
 import ua.itea.javaeye.utils.Session;
-import ua.itea.javaeye.utils.SessionUtils;
+import ua.itea.javaeye.utils.SessionWindow;
 
 /**
  *
@@ -54,6 +57,7 @@ public class SessionList extends JFrame implements Runnable {
 
 	private void updateSessionList() {
 		ArrayList<Session> sessionList = db.getSessionsList();
+		sessionButtonsPanel.removeAll();
 		for (Session session : sessionList) {
 			session.sessionButton.addActionListener(event -> {
 				// remoteCam.setSession(session);
@@ -61,6 +65,7 @@ public class SessionList extends JFrame implements Runnable {
 			});
 			sessionButtonsPanel.add(session);
 		}
+		sessionButtonsPanel.revalidate();
 	}
 
 	@Override
@@ -86,7 +91,7 @@ public class SessionList extends JFrame implements Runnable {
 		ImageIcon icon = new ImageIcon(iconURL);
 		addSessionButton.setIcon(icon);
 		addSessionButton.addActionListener(event -> {
-			(new Thread(new SessionUtils(sessionButtonsPanel, webcam))).start();
+			new SessionWorker().addSession();
 		});
 
 		iconURL = getClass().getResource("/img/eye.png");
@@ -113,7 +118,40 @@ public class SessionList extends JFrame implements Runnable {
 		videoClient.connect(new InetSocketAddress(runSession.getRemoteAddress(), JavaEyeUtils.streamServerPort));
 	}
 
-	protected class StreamFrameListenerIMPL implements StreamFrameListener {
+	private class SessionWorker extends SessionWindow {
+		private static final long serialVersionUID = 5392077596526562854L;
+
+		public void addSession() {
+			setWindowTitle("New session");
+			setOkButton("Add");
+			createWindow();
+
+			okButton.addActionListener(event -> {
+				Session session = new Session();
+				if (getNameTextField().getText().isEmpty()) {
+					JOptionPane.showMessageDialog(null, "Session couldn't be empty", "Session name error",
+							JOptionPane.ERROR_MESSAGE);
+				} else if (!JavaEyeUtils.validIP(getAddressTextField().getText())) {
+					JOptionPane.showMessageDialog(null, "Provide correct remote IP", "Session address error",
+							JOptionPane.ERROR_MESSAGE);
+				} else {
+					session.setLocalAddress(JavaEyeUtils.localAddress);
+					session.setRemoteName(getNameTextField().getText());
+					try {
+						session.setRemoteAddress(InetAddress.getByName(getAddressTextField().getText()));
+					} catch (UnknownHostException e) {
+						e.printStackTrace();
+					}
+
+					dispose();
+					db.addSession(session);
+					updateSessionList();
+				}
+			});
+		}
+	}
+
+	private class StreamFrameListenerIMPL implements StreamFrameListener {
 		private volatile long count = 0;
 
 		@Override
