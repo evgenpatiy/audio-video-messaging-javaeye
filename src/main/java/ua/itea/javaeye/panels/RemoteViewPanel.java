@@ -25,6 +25,8 @@ public class RemoteViewPanel extends ViewPanel implements Runnable {
 
 	private final VideoPanel videoPanel;
 	private Session session = null;
+	private JLabel sessionNameLabel = new JLabel();
+	private JLabel sessionremoteAddressLabel = new JLabel();
 
 	public RemoteViewPanel() {
 		this.videoPanel = new VideoPanel();
@@ -32,6 +34,8 @@ public class RemoteViewPanel extends ViewPanel implements Runnable {
 		setView(videoPanel);
 		viewTitle = "Remote cam view";
 
+		createViewPanel();
+		showInfoPanel();
 	}
 
 	public void setSession(Session session) {
@@ -49,23 +53,26 @@ public class RemoteViewPanel extends ViewPanel implements Runnable {
 
 	@Override
 	public void run() {
-		createViewPanel();
-		showInfoPanel();
+		setVisible(true);
+		updateInfoPanel();
 	}
 
 	@Override
 	public void showInfoPanel() {
-		if (info.getComponentCount() == 0) {
-			info.add(new JLabel(" Remote name: "));
-			info.add(new JLabel(session.getRemoteName()));
-			info.add(new JLabel(" Remote IP: "));
-			info.add(new JLabel(session.getRemoteAddress().getHostAddress()));
-			info.add(new JLabel(" View resolution:"));
-			info.add(new JLabel(
-					(int) JavaEyeUtils.dimension.getWidth() + "x" + (int) JavaEyeUtils.dimension.getHeight()));
-			info.add(new JLabel(" Video Codec: "));
-			info.add(new JLabel("H.264"));
-		}
+		info.add(new JLabel(" Remote name: "));
+		info.add(sessionNameLabel);
+		info.add(new JLabel(" Remote IP: "));
+		info.add(sessionremoteAddressLabel);
+		info.add(new JLabel(" View resolution:"));
+		info.add(new JLabel((int) JavaEyeUtils.dimension.getWidth() + "x" + (int) JavaEyeUtils.dimension.getHeight()));
+		info.add(new JLabel(" Video Codec: "));
+		info.add(new JLabel("H.264"));
+	}
+
+	@Override
+	public void updateInfoPanel() {
+		sessionNameLabel.setText(session.getRemoteName());
+		sessionremoteAddressLabel.setText(session.getRemoteAddress().getHostAddress());
 	}
 
 }

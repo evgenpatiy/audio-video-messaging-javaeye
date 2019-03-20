@@ -59,10 +59,12 @@ public abstract class ViewPanel extends JFrame {
 		setIconImage(icon.getImage());
 
 		pack();
-		setVisible(true);
+		setVisible(false);
 	}
 
 	public abstract void showInfoPanel();
+
+	public abstract void updateInfoPanel();
 
 	public void setView(JPanel view) {
 		this.view = view;

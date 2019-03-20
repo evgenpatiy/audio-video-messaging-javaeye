@@ -9,6 +9,7 @@ public class JavaEyeUtils {
 	public static InetAddress localAddress = null;
 	public static final Dimension dimension = new Dimension(320, 240);
 	public static final int streamServerPort = 20000;
+	public static final String DBNAME = "javaeye.db";
 
 	public static boolean validIP(String s) {
 		String validIP = "^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$";

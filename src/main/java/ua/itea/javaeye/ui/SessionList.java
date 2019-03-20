@@ -28,6 +28,7 @@ import ua.itea.javaeye.stream.VideoStreamClient;
 import ua.itea.javaeye.utils.DbWorker;
 import ua.itea.javaeye.utils.JavaEyeUtils;
 import ua.itea.javaeye.utils.Session;
+import ua.itea.javaeye.utils.SessionUtils;
 
 /**
  *
@@ -40,19 +41,31 @@ public class SessionList extends JFrame implements Runnable {
 	private final LocalViewPanel localCam;
 	private final RemoteViewPanel remoteCam;
 	private final VideoStreamClient videoClient;
+	private DbWorker db;
+	private JPanel sessionButtonsPanel = new JPanel();
 
 	SessionList(Webcam webcam) {
 		this.webcam = webcam;
 		this.localCam = new LocalViewPanel(webcam);
 		this.remoteCam = new RemoteViewPanel();
+		this.db = new DbWorker(JavaEyeUtils.DBNAME);
 		this.videoClient = new VideoStreamClient(new StreamFrameListenerIMPL(), JavaEyeUtils.dimension);
+	}
+
+	private void updateSessionList() {
+		ArrayList<Session> sessionList = db.getSessionsList();
+		for (Session session : sessionList) {
+			session.sessionButton.addActionListener(event -> {
+				// remoteCam.setSession(session);
+				runSession(session);
+			});
+			sessionButtonsPanel.add(session);
+		}
 	}
 
 	@Override
 	public void run() {
-		DbWorker db = new DbWorker("javaeye.db");
 
-		JPanel sessionButtonsPanel = new JPanel();
 		JPanel bottomButtonsPanel = new JPanel();
 		JButton addSessionButton = new JButton("Session");
 
@@ -61,13 +74,7 @@ public class SessionList extends JFrame implements Runnable {
 		if (!db.isDbExists()) {
 			db.createDb();
 		} else {
-			ArrayList<Session> sessionList = db.getSessionsList();
-			for (Session session : sessionList) {
-				session.sessionButton.addActionListener(event -> {
-					runSession(session);
-				});
-				sessionButtonsPanel.add(session);
-			}
+			updateSessionList();
 		}
 
 		System.out.println("SessionList runs on " + Thread.currentThread().getName());
@@ -79,7 +86,7 @@ public class SessionList extends JFrame implements Runnable {
 		ImageIcon icon = new ImageIcon(iconURL);
 		addSessionButton.setIcon(icon);
 		addSessionButton.addActionListener(event -> {
-			(new Thread(new AddSession(sessionButtonsPanel, webcam))).start();
+			(new Thread(new SessionUtils(sessionButtonsPanel, webcam))).start();
 		});
 
 		iconURL = getClass().getResource("/img/eye.png");
@@ -99,11 +106,11 @@ public class SessionList extends JFrame implements Runnable {
 		setVisible(true);
 	}
 
-	private void runSession(Session session) {
-		remoteCam.setSession(session);
+	private void runSession(Session runSession) {
+		remoteCam.setSession(runSession);
 		(new Thread(localCam)).start();
 		(new Thread(remoteCam)).start();
-		videoClient.connect(new InetSocketAddress(session.getRemoteAddress(), JavaEyeUtils.streamServerPort));
+		videoClient.connect(new InetSocketAddress(runSession.getRemoteAddress(), JavaEyeUtils.streamServerPort));
 	}
 
 	protected class StreamFrameListenerIMPL implements StreamFrameListener {

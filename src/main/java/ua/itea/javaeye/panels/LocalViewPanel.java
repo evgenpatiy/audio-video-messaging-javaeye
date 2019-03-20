@@ -25,7 +25,6 @@ public class LocalViewPanel extends ViewPanel implements Runnable {
 	private final Webcam webcam;
 	private final WebcamPanel webcamPanel;
 	private final JLabel webcamFPSLabel = new JLabel();
-	private final JLabel webcamResolutionLabel = new JLabel();
 
 	public LocalViewPanel(Webcam webcam) {
 		this.webcam = webcam;
@@ -35,17 +34,17 @@ public class LocalViewPanel extends ViewPanel implements Runnable {
 		setView(webcamPanel);
 		viewTitle = "Local cam view";
 
+		createViewPanel();
+		showInfoPanel();
 	}
 
 	@Override
 	public void run() {
-		createViewPanel();
-		showInfoPanel();
-
+		setVisible(true);
 		while (true) {
 			try {
 				Thread.sleep(500);
-				webcamFPSLabel.setText(String.format("%4.2f", webcam.getFPS()));
+				updateInfoPanel();
 			} catch (InterruptedException e) {
 			}
 		}
@@ -53,22 +52,20 @@ public class LocalViewPanel extends ViewPanel implements Runnable {
 
 	@Override
 	public void showInfoPanel() {
+		info.add(new JLabel(" Webcam: "));
+		info.add(new JLabel(webcam.getName()));
+		info.add(new JLabel(" Webcam FPS: "));
+		info.add(webcamFPSLabel);
+		info.add(new JLabel(" View resolution:"));
+		info.add(new JLabel((int) webcam.getViewSize().getWidth() + "x" + (int) webcam.getViewSize().getHeight()));
+		info.add(new JLabel(" Local IP: "));
+		info.add(new JLabel(JavaEyeUtils.localAddress.getHostAddress()));
+		info.add(new JLabel(" Video Codec: "));
+		info.add(new JLabel("H.264"));
+	}
+
+	@Override
+	public void updateInfoPanel() {
 		webcamFPSLabel.setText(String.format("%4.2f", webcam.getFPS()));
-		webcamResolutionLabel
-				.setText((int) webcam.getViewSize().getWidth() + "x" + (int) webcam.getViewSize().getHeight());
-
-		if (info.getComponentCount() == 0) {
-
-			info.add(new JLabel(" Webcam: "));
-			info.add(new JLabel(webcam.getName()));
-			info.add(new JLabel(" Webcam FPS: "));
-			info.add(webcamFPSLabel);
-			info.add(new JLabel(" View resolution:"));
-			info.add(webcamResolutionLabel);
-			info.add(new JLabel(" Local IP: "));
-			info.add(new JLabel(JavaEyeUtils.localAddress.getHostAddress()));
-			info.add(new JLabel(" Video Codec: "));
-			info.add(new JLabel("H.264"));
-		}
 	}
 }
