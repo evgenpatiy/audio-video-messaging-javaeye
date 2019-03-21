@@ -65,12 +65,14 @@ public class Preferences extends JFrame implements Runnable, WebcamListener, Web
 
 		JButton sessionListButton = new JButton("Sessions");
 		sessionListButton.addActionListener(event -> {
+			sessionListButton.setEnabled(false);
 			(new Thread(new SessionList(webcam))).start();
 		});
 
 		sessionListButton.setEnabled(true);
 		JButton exitButton = new JButton("Exit");
 		exitButton.addActionListener(event -> {
+			webcam.close();
 			System.exit(0);
 		});
 
@@ -254,13 +256,12 @@ public class Preferences extends JFrame implements Runnable, WebcamListener, Web
 
 	@Override
 	public void windowClosing(WindowEvent e) {
-		// TODO Auto-generated method stub
+		webcam.close();
 
 	}
 
 	@Override
 	public void windowClosed(WindowEvent e) {
-		// TODO Auto-generated method stub
 
 	}
 
