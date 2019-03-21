@@ -83,7 +83,6 @@ public class SessionList extends JFrame implements Runnable {
 			updateSessionList();
 		}
 
-		System.out.println("SessionList runs on " + Thread.currentThread().getName());
 		setPreferredSize(new Dimension(200, 500));
 		setLayout(new BorderLayout());
 		setTitle("Session list");
