@@ -58,6 +58,16 @@ public class Preferences extends JFrame implements Runnable, WebcamListener, Web
 	private WebcamPicker webcamPicker = null;
 	private boolean webcamOK = false;
 	private boolean networkOK = false;
+	private ServerStreamReceiver streamReceiver = new ServerStreamReceiver();
+
+	/*
+	 * public Preferences() { this.addWindowListener(new
+	 * java.awt.event.WindowAdapter() {
+	 * 
+	 * @Override public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+	 * System.out.println("Closing fucking window");
+	 * streamReceiver.setStatus(false); streamReceiver.stop(); } }); }
+	 */
 
 	@Override
 	public void run() {
@@ -173,7 +183,7 @@ public class Preferences extends JFrame implements Runnable, WebcamListener, Web
 
 			// Start audio receiver!
 
-			new ServerStreamReceiver();
+			(new Thread(streamReceiver)).start();
 
 			// Start video stream server!
 
@@ -215,7 +225,7 @@ public class Preferences extends JFrame implements Runnable, WebcamListener, Web
 		sessionListButton.setEnabled(true);
 		JButton exitButton = new JButton("Exit");
 		exitButton.addActionListener(event -> {
-			webcam.close();
+			streamReceiver.stop();
 			System.exit(0);
 		});
 
@@ -236,7 +246,7 @@ public class Preferences extends JFrame implements Runnable, WebcamListener, Web
 		setIconImage(icon.getImage());
 
 		setVisible(true);
-		setResizable(false);
+		// setResizable(false);
 		pack();
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setLocationRelativeTo(null);
@@ -256,8 +266,7 @@ public class Preferences extends JFrame implements Runnable, WebcamListener, Web
 
 	@Override
 	public void windowClosing(WindowEvent e) {
-		webcam.close();
-
+		streamReceiver.stop();
 	}
 
 	@Override

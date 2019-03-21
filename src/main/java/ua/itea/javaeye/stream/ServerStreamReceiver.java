@@ -19,7 +19,7 @@ public class ServerStreamReceiver implements Runnable {
 
 	private AudioInputStream ais;
 	private AudioFormat format;
-	private boolean status = true;
+	private volatile boolean status;
 	private int port = JavaEyeUtils.SOUND_PORT;
 	private int sampleRate = JavaEyeUtils.SAMPLE_RATE;
 	private int channels = JavaEyeUtils.CHANNELS;
@@ -28,8 +28,14 @@ public class ServerStreamReceiver implements Runnable {
 	private DataLine.Info dataLineInfo;
 	private SourceDataLine sourceDataLine;
 
+	private DatagramSocket serverSocket = null;
+
 	public ServerStreamReceiver() {
-		(new Thread(this)).start();
+		this.status = true;
+	}
+
+	public void setStatus(boolean status) {
+		this.status = status;
 	}
 
 	public void toSpeaker(byte soundbytes[]) {
@@ -41,24 +47,24 @@ public class ServerStreamReceiver implements Runnable {
 		}
 	}
 
+	public void stop() {
+		this.status = false;
+		serverSocket.close();
+		sourceDataLine.drain();
+		sourceDataLine.close();
+
+		System.out.println("Sound receiver stopped");
+	}
+
 	@Override
 	public void run() {
 		System.out.println("Sound receiver listening port: " + port);
-
-		DatagramSocket serverSocket = null;
 		try {
 			serverSocket = new DatagramSocket(port);
 		} catch (SocketException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.out.println("Closing socket");
+			// e.printStackTrace();
 		}
-
-		/**
-		 * Formula for lag = (byte_size/sample_rate)*2 Byte size 9728 will produce ~
-		 * 0.45 seconds of lag. Voice slightly broken. Byte size 1400 will produce ~
-		 * 0.06 seconds of lag. Voice extremely broken. Byte size 4000 will produce ~
-		 * 0.18 seconds of lag. Voice slightly more broken then 9728.
-		 */
 
 		byte[] receiveData = new byte[4096];
 
@@ -66,11 +72,6 @@ public class ServerStreamReceiver implements Runnable {
 		dataLineInfo = new DataLine.Info(SourceDataLine.class, format);
 		try {
 			sourceDataLine = (SourceDataLine) AudioSystem.getLine(dataLineInfo);
-		} catch (LineUnavailableException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		try {
 			sourceDataLine.open(format);
 		} catch (LineUnavailableException e) {
 			// TODO Auto-generated catch block
@@ -85,18 +86,19 @@ public class ServerStreamReceiver implements Runnable {
 		DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
 		ByteArrayInputStream bais = new ByteArrayInputStream(receivePacket.getData());
 
-		while (status == true) {
-			try {
-				serverSocket.receive(receivePacket);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+		while (true) {
+			if (status == false) {
+				break;
+			} else {
+				try {
+					serverSocket.receive(receivePacket);
+				} catch (IOException e) {
+					System.out.println("Sound receiver socket closed");
+					// e.printStackTrace();
+				}
+				ais = new AudioInputStream(bais, format, receivePacket.getLength());
+				toSpeaker(receivePacket.getData());
 			}
-			ais = new AudioInputStream(bais, format, receivePacket.getLength());
-			toSpeaker(receivePacket.getData());
 		}
-
-		sourceDataLine.drain();
-		sourceDataLine.close();
 	}
 }
