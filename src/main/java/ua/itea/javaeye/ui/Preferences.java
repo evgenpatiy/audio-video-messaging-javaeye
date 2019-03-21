@@ -69,13 +69,6 @@ public class Preferences extends JFrame implements Runnable, WebcamListener, Web
 			(new Thread(new SessionList(webcam))).start();
 		});
 
-		sessionListButton.setEnabled(true);
-		JButton exitButton = new JButton("Exit");
-		exitButton.addActionListener(event -> {
-			webcam.close();
-			System.exit(0);
-		});
-
 		JPanel settingsPanel = new JPanel();
 		settingsPanel.setLayout(new GridLayout(2, 1));
 		JPanel buttonsPanel = new JPanel();
@@ -218,6 +211,13 @@ public class Preferences extends JFrame implements Runnable, WebcamListener, Web
 		} else {
 			webcamSetupPanel.add(new JLabel("Webcam fault", SwingConstants.CENTER), BorderLayout.CENTER);
 		}
+
+		sessionListButton.setEnabled(true);
+		JButton exitButton = new JButton("Exit");
+		exitButton.addActionListener(event -> {
+			webcam.close();
+			System.exit(0);
+		});
 
 		settingsPanel.add(webcamSetupPanel);
 		settingsPanel.add(networkSetupPanel);
