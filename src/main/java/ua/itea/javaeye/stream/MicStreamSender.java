@@ -27,14 +27,20 @@ public class MicStreamSender implements Runnable {
 	private int channels = JavaEyeUtils.CHANNELS;
 	private int sampleSize = JavaEyeUtils.SAMPLE_SIZE;
 	private boolean bigEndian = false;
+	private volatile boolean stop = false;
 
 	public MicStreamSender(InetAddress remoteAddress) {
 		this.remoteAddress = remoteAddress;
-		(new Thread(this)).start();
+	}
+
+	public void setStop(boolean stop) {
+		this.stop = stop;
 	}
 
 	@Override
 	public void run() {
+		System.out.println("send sound stream to " + remoteAddress.getHostAddress());
+
 		AudioFormat.Encoding encoding = AudioFormat.Encoding.PCM_SIGNED;
 		AudioFormat format = new AudioFormat(encoding, rate, sampleSize, channels, (sampleSize / 8) * channels, rate,
 				bigEndian);
@@ -57,15 +63,20 @@ public class MicStreamSender implements Runnable {
 			int numBytesRead;
 			byte[] data = new byte[4096];
 
-			// remoteAddress = InetAddress.getByName("192.168.76.223");
 			DatagramSocket socket = new DatagramSocket();
 			while (true) {
-				// Read the next chunk of data from the TargetDataLine.
-				numBytesRead = line.read(data, 0, data.length);
-				// Save this chunk of data.
-				dgp = new DatagramPacket(data, data.length, remoteAddress, port);
+				if (stop) {
+					System.out.println("interrupt sound stream to " + remoteAddress.getHostAddress());
+					socket.close();
+					break;
+				} else {
+					// Read the next chunk of data from the TargetDataLine.
+					numBytesRead = line.read(data, 0, data.length);
+					// Save this chunk of data.
+					dgp = new DatagramPacket(data, data.length, remoteAddress, port);
 
-				socket.send(dgp);
+					socket.send(dgp);
+				}
 			}
 
 		} catch (LineUnavailableException e) {

@@ -27,7 +27,6 @@ import com.github.sarxos.webcam.Webcam;
 import ua.itea.javaeye.handler.StreamFrameListener;
 import ua.itea.javaeye.panels.LocalViewPanel;
 import ua.itea.javaeye.panels.RemoteViewPanel;
-import ua.itea.javaeye.stream.MicStreamSender;
 import ua.itea.javaeye.stream.VideoStreamClient;
 import ua.itea.javaeye.utils.DbWorker;
 import ua.itea.javaeye.utils.JavaEyeUtils;
@@ -120,7 +119,6 @@ public class SessionList extends JFrame implements Runnable {
 			(new Thread(localCam)).start();
 			(new Thread(remoteCam)).start();
 
-			new MicStreamSender(runSession.getRemoteAddress());
 			videoClient.connect(new InetSocketAddress(runSession.getRemoteAddress(), JavaEyeUtils.streamServerPort));
 		}
 
