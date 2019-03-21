@@ -14,23 +14,28 @@ import javax.sound.sampled.DataLine;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.TargetDataLine;
 
-public class MicStreamSender {
+import ua.itea.javaeye.utils.JavaEyeUtils;
+
+public class MicStreamSender implements Runnable {
 	public byte[] buffer;
-	private int port;
-	static AudioInputStream ais;
+	private int port = JavaEyeUtils.SOUND_PORT;
+	private AudioInputStream ais;
+	private TargetDataLine line;
+	private DatagramPacket dgp;
+	private InetAddress remoteAddress;
+	private int rate = JavaEyeUtils.SAMPLE_RATE;
+	private int channels = JavaEyeUtils.CHANNELS;
+	private int sampleSize = JavaEyeUtils.SAMPLE_SIZE;
+	private boolean bigEndian = false;
 
-	public static void main(String[] args) {
-		TargetDataLine line;
-		DatagramPacket dgp;
+	public MicStreamSender(InetAddress remoteAddress) {
+		this.remoteAddress = remoteAddress;
+		(new Thread(this)).start();
+	}
 
+	@Override
+	public void run() {
 		AudioFormat.Encoding encoding = AudioFormat.Encoding.PCM_SIGNED;
-		// float rate = 44100.0f;
-		int rate = 22050;
-		int channels = 2;
-		int sampleSize = 8;
-		boolean bigEndian = false;
-		InetAddress addr;
-
 		AudioFormat format = new AudioFormat(encoding, rate, sampleSize, channels, (sampleSize / 8) * channels, rate,
 				bigEndian);
 
@@ -47,19 +52,18 @@ public class MicStreamSender {
 			buffsize += 512;
 
 			line.open(format);
-
 			line.start();
 
 			int numBytesRead;
 			byte[] data = new byte[4096];
 
-			addr = InetAddress.getByName("192.168.76.223");
+			// remoteAddress = InetAddress.getByName("192.168.76.223");
 			DatagramSocket socket = new DatagramSocket();
 			while (true) {
 				// Read the next chunk of data from the TargetDataLine.
 				numBytesRead = line.read(data, 0, data.length);
 				// Save this chunk of data.
-				dgp = new DatagramPacket(data, data.length, addr, 50005);
+				dgp = new DatagramPacket(data, data.length, remoteAddress, port);
 
 				socket.send(dgp);
 			}
@@ -73,5 +77,6 @@ public class MicStreamSender {
 		} catch (IOException e2) {
 			// TODO: handle exception
 		}
+
 	}
 }
