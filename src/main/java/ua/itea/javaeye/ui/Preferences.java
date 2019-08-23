@@ -41,335 +41,319 @@ import com.github.sarxos.webcam.WebcamListener;
 import com.github.sarxos.webcam.WebcamPanel;
 import com.github.sarxos.webcam.WebcamPicker;
 
+import lombok.extern.slf4j.Slf4j;
 import ua.itea.javaeye.stream.ServerStreamReceiver;
 import ua.itea.javaeye.stream.VideoStreamServer;
 import ua.itea.javaeye.utils.JavaEyeUtils;
 
+@Slf4j
 public class Preferences extends JFrame implements Runnable, WebcamListener, WebcamDiscoveryListener, ItemListener,
-		WindowListener, UncaughtExceptionHandler {
+        WindowListener, UncaughtExceptionHandler {
+    private static final long serialVersionUID = 6741762424371250099L;
+    private final JavaEyeUtils utils = new JavaEyeUtils();
+    private Webcam webcam = null;
+    private JPanel webcamSetupPanel = new JPanel();
+    private WebcamPanel webcamPreviewPanel = null;
+    private WebcamPicker webcamPicker = null;
+    private boolean webcamOK = false;
+    private boolean networkOK = false;
+    private ServerStreamReceiver streamReceiver = new ServerStreamReceiver();
+    private InetAddress localAddress = null;
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 6741762424371250099L;
-	private Webcam webcam = null;
-	private JPanel webcamSetupPanel = new JPanel();
-	private WebcamPanel webcamPreviewPanel = null;
-	private WebcamPicker webcamPicker = null;
-	private boolean webcamOK = false;
-	private boolean networkOK = false;
-	private ServerStreamReceiver streamReceiver = new ServerStreamReceiver();
+    @Override
+    public void run() {
+        addWindowListener(this);
 
-	/*
-	 * public Preferences() { this.addWindowListener(new
-	 * java.awt.event.WindowAdapter() {
-	 * 
-	 * @Override public void windowClosing(java.awt.event.WindowEvent windowEvent) {
-	 * System.out.println("Closing fucking window");
-	 * streamReceiver.setStatus(false); streamReceiver.stop(); } }); }
-	 */
+        JButton sessionListButton = new JButton("Sessions");
+        sessionListButton.addActionListener(event -> {
+            sessionListButton.setEnabled(false);
+            (new Thread(new SessionList(webcam, localAddress))).start();
+        });
 
-	@Override
-	public void run() {
-		addWindowListener(this);
+        JPanel settingsPanel = new JPanel();
+        settingsPanel.setLayout(new GridLayout(2, 1));
+        JPanel buttonsPanel = new JPanel();
+        buttonsPanel.setLayout(new FlowLayout());
 
-		JButton sessionListButton = new JButton("Sessions");
-		sessionListButton.addActionListener(event -> {
-			sessionListButton.setEnabled(false);
-			(new Thread(new SessionList(webcam))).start();
-		});
+        // network
 
-		JPanel settingsPanel = new JPanel();
-		settingsPanel.setLayout(new GridLayout(2, 1));
-		JPanel buttonsPanel = new JPanel();
-		buttonsPanel.setLayout(new FlowLayout());
+        JLabel netHostName = new JLabel();
+        JLabel netAddress = new JLabel();
+        JLabel netNIFStatus = new JLabel();
+        JLabel netMAC = new JLabel();
 
-		// network
+        JPanel networkSetupPanel = new JPanel();
+        networkSetupPanel.setBorder(
+                BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black), "Network settings "));
+        networkSetupPanel.setLayout(new GridLayout(7, 2));
 
-		JLabel netHostName = new JLabel();
-		JLabel netAddress = new JLabel();
-		JLabel netNIFStatus = new JLabel();
-		JLabel netMAC = new JLabel();
+        JComboBox<NetworkInterface> netNIF = new JComboBox<NetworkInterface>();
+        netNIF.addActionListener(new ActionListener() {
 
-		JPanel networkSetupPanel = new JPanel();
-		networkSetupPanel.setBorder(
-				BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black), "Network settings "));
-		networkSetupPanel.setLayout(new GridLayout(7, 2));
+            @SuppressWarnings("unchecked")
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JComboBox<NetworkInterface> source = (JComboBox<NetworkInterface>) e.getSource();
+                JComboBox<NetworkInterface> jb = source;
+                NetworkInterface nif = (NetworkInterface) jb.getSelectedItem();
+                try {
+                    if (nif.isUp()) {
+                        netNIFStatus.setText("connected");
+                        netNIFStatus.setIcon(new ImageIcon(ImageIO.read(getClass().getResource("/img/green.png"))));
+                        networkOK = true;
+                        if (webcamOK && networkOK) {
+                            sessionListButton.setEnabled(true);
+                        }
+                    } else {
+                        netNIFStatus.setText("disconnected");
+                        netNIFStatus.setIcon(new ImageIcon(ImageIO.read(getClass().getResource("/img/red.png"))));
+                        networkOK = false;
+                        if (webcamOK && networkOK) {
+                            sessionListButton.setEnabled(true);
+                        }
+                    }
+                } catch (SocketException ex) {
+                    JOptionPane.showMessageDialog(null, "Network socket failure!", "error", JOptionPane.ERROR_MESSAGE);
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
 
-		JComboBox<NetworkInterface> netNIF = new JComboBox<NetworkInterface>();
-		netNIF.addActionListener(new ActionListener() {
-			@SuppressWarnings("unchecked")
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				JComboBox<NetworkInterface> source = (JComboBox<NetworkInterface>) e.getSource();
-				JComboBox<NetworkInterface> jb = source;
-				NetworkInterface nif = (NetworkInterface) jb.getSelectedItem();
-				try {
-					if (nif.isUp()) {
-						netNIFStatus.setText("connected");
-						netNIFStatus.setIcon(new ImageIcon(ImageIO.read(getClass().getResource("/img/green.png"))));
-						networkOK = true;
-						if (webcamOK && networkOK) {
-							sessionListButton.setEnabled(true);
-						}
-					} else {
-						netNIFStatus.setText("disconnected");
-						netNIFStatus.setIcon(new ImageIcon(ImageIO.read(getClass().getResource("/img/red.png"))));
-						networkOK = false;
-						if (webcamOK && networkOK) {
-							sessionListButton.setEnabled(true);
-						}
-					}
-				} catch (SocketException ex) {
-					JOptionPane.showMessageDialog(null, "Network socket failure!", "error", JOptionPane.ERROR_MESSAGE);
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
+                Enumeration<InetAddress> inetAddresses = nif.getInetAddresses();
+                try {
+                    netHostName.setText(InetAddress.getLocalHost().getHostName());
+                } catch (UnknownHostException ex) {
+                }
 
-				Enumeration<InetAddress> inetAddresses = nif.getInetAddresses();
-				try {
-					netHostName.setText(InetAddress.getLocalHost().getHostName());
-				} catch (UnknownHostException ex) {
-				}
+                localAddress = Collections.list(inetAddresses).get(0);
 
-				JavaEyeUtils.localAddress = Collections.list(inetAddresses).get(0);
-				netAddress.setText(JavaEyeUtils.localAddress.getHostAddress());
-				try {
-					netMAC.setText(JavaEyeUtils.getStringFromMAC(nif.getHardwareAddress()));
-				} catch (SocketException e1) {
-					e1.printStackTrace();
-				}
-			}
-		});
+                netAddress.setText(localAddress.getHostAddress());
+                try {
+                    netMAC.setText(
+                            nif.isLoopback() ? "loopback, no MAC" : utils.getStringFromMAC(nif.getHardwareAddress()));
+                } catch (SocketException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        });
 
-		try {
-			Enumeration<NetworkInterface> nets = NetworkInterface.getNetworkInterfaces();
-			for (NetworkInterface nif : Collections.list(nets)) {
-				if (!nif.isLoopback()) {
-					netNIF.addItem(nif);
-				}
-			}
-		} catch (SocketException ex) {
-			JOptionPane.showMessageDialog(null, "Network socket failure!", "Error", JOptionPane.ERROR_MESSAGE);
-		}
+        try {
+            Enumeration<NetworkInterface> nets = NetworkInterface.getNetworkInterfaces();
+            for (NetworkInterface nif : Collections.list(nets)) {
+                if (!nif.isLoopback()) {
+                    netNIF.addItem(nif);
+                }
+            }
+        } catch (SocketException ex) {
+            JOptionPane.showMessageDialog(null, "Network socket failure!", "Error", JOptionPane.ERROR_MESSAGE);
+        }
 
-		networkSetupPanel.add(new JLabel(" NIC:"));
-		networkSetupPanel.add(netNIF);
-		networkSetupPanel.add(new JLabel(" NIC status:"));
-		networkSetupPanel.add(netNIFStatus);
-		networkSetupPanel.add(new JLabel(" Hostname:"));
-		networkSetupPanel.add(netHostName);
-		networkSetupPanel.add(new JLabel(" IP address:"));
-		networkSetupPanel.add(netAddress);
-		networkSetupPanel.add(new JLabel(" MAC:"));
-		networkSetupPanel.add(netMAC);
-		networkSetupPanel.add(new JLabel(" Stream port:"));
-		networkSetupPanel.add(new JLabel(String.valueOf(JavaEyeUtils.streamServerPort)));
+        networkSetupPanel.add(new JLabel(" NIC:"));
+        networkSetupPanel.add(netNIF);
+        networkSetupPanel.add(new JLabel(" NIC status:"));
+        networkSetupPanel.add(netNIFStatus);
+        networkSetupPanel.add(new JLabel(" Hostname:"));
+        networkSetupPanel.add(netHostName);
+        networkSetupPanel.add(new JLabel(" IP address:"));
+        networkSetupPanel.add(netAddress);
+        networkSetupPanel.add(new JLabel(" MAC:"));
+        networkSetupPanel.add(netMAC);
+        networkSetupPanel.add(new JLabel(" Stream port:"));
+        networkSetupPanel.add(new JLabel(String.valueOf(JavaEyeUtils.streamServerPort)));
 
-		// webcam
+        // webcam
 
-		Webcam.addDiscoveryListener(this); // webcam connect-disconnect
-		webcamPicker = new WebcamPicker();
-		webcamPicker.addItemListener(this);
-		webcam = webcamPicker.getSelectedWebcam();
+        Webcam.addDiscoveryListener(this); // webcam connect-disconnect
+        webcamPicker = new WebcamPicker();
+        webcamPicker.addItemListener(this);
+        webcam = webcamPicker.getSelectedWebcam();
 
-		webcam.setViewSize(new Dimension(320, 240));
+        webcam.setViewSize(new Dimension(320, 240));
 
-		webcamSetupPanel.setLayout(new BorderLayout());
-		webcamSetupPanel.setBorder(
-				BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black), "Web-camera settings "));
+        webcamSetupPanel.setLayout(new BorderLayout());
+        webcamSetupPanel.setBorder(
+                BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black), "Web-camera settings "));
 
-		if (webcam != null) {
+        if (webcam != null) {
 
-			// Start audio receiver!
+            // Start audio receiver!
 
-			(new Thread(streamReceiver)).start();
+            (new Thread(streamReceiver)).start();
 
-			// Start video stream server!
+            // Start video stream server!
 
-			VideoStreamServer videoServer = new VideoStreamServer(webcam, JavaEyeUtils.dimension);
-			InetSocketAddress myAddress = new InetSocketAddress(JavaEyeUtils.localAddress,
-					JavaEyeUtils.streamServerPort);
-			videoServer.start(myAddress);
+            VideoStreamServer videoServer = new VideoStreamServer(webcam, JavaEyeUtils.dimension);
+            InetSocketAddress myAddress = new InetSocketAddress(localAddress, JavaEyeUtils.streamServerPort);
+            videoServer.start(myAddress);
 
-			webcamOK = true;
-			if (webcamOK && networkOK) {
-				sessionListButton.setEnabled(true);
-			}
+            webcamOK = true;
+            if (webcamOK && networkOK) {
+                sessionListButton.setEnabled(true);
+            }
 
-			webcam.addWebcamListener(Preferences.this);
-			webcamPreviewPanel = new WebcamPanel(webcam, false);
-			webcamPreviewPanel.setFPSDisplayed(true);
-			webcamPreviewPanel.setDoubleBuffered(true);
-			webcamPreviewPanel.setImageSizeDisplayed(true);
+            webcam.addWebcamListener(Preferences.this);
+            webcamPreviewPanel = new WebcamPanel(webcam, false);
+            webcamPreviewPanel.setFPSDisplayed(true);
+            webcamPreviewPanel.setDoubleBuffered(true);
+            webcamPreviewPanel.setImageSizeDisplayed(true);
 
-			webcamSetupPanel.add(webcamPicker, BorderLayout.NORTH);
-			webcamSetupPanel.add(webcamPreviewPanel, BorderLayout.CENTER);
+            webcamSetupPanel.add(webcamPicker, BorderLayout.NORTH);
+            webcamSetupPanel.add(webcamPreviewPanel, BorderLayout.CENTER);
 
-			Thread webcamPanelThread = new Thread() {
-				@Override
-				public void run() {
-					System.out.println("Camera runs on " + Thread.currentThread().getName());
-					webcamPreviewPanel.start();
-				}
-			};
-			webcamPanelThread.setDaemon(true);
-			webcamPanelThread.setName("preview panel on preferences window");
-			webcamPanelThread.setUncaughtExceptionHandler(this);
-			webcamPanelThread.start();
+            Thread webcamPanelThread = new Thread() {
+                @Override
+                public void run() {
+                    log.info("Camera runs on " + Thread.currentThread().getName());
+                    webcamPreviewPanel.start();
+                }
+            };
+            webcamPanelThread.setDaemon(true);
+            webcamPanelThread.setName("preview panel on preferences window");
+            webcamPanelThread.setUncaughtExceptionHandler(this);
+            webcamPanelThread.start();
 
-		} else {
-			webcamSetupPanel.add(new JLabel("Webcam fault", SwingConstants.CENTER), BorderLayout.CENTER);
-		}
+        } else {
+            webcamSetupPanel.add(new JLabel("Webcam fault", SwingConstants.CENTER), BorderLayout.CENTER);
+        }
 
-		sessionListButton.setEnabled(true);
-		JButton exitButton = new JButton("Exit");
-		exitButton.addActionListener(event -> {
-			streamReceiver.stop();
-			System.exit(0);
-		});
+        sessionListButton.setEnabled(true);
+        JButton exitButton = new JButton("Exit");
+        exitButton.addActionListener(event -> {
+            streamReceiver.stop();
+            System.exit(1);
+        });
 
-		settingsPanel.add(webcamSetupPanel);
-		settingsPanel.add(networkSetupPanel);
+        settingsPanel.add(webcamSetupPanel);
+        settingsPanel.add(networkSetupPanel);
 
-		buttonsPanel.add(sessionListButton);
-		buttonsPanel.add(exitButton);
+        buttonsPanel.add(sessionListButton);
+        buttonsPanel.add(exitButton);
 
-		setLayout(new BorderLayout());
-		add(settingsPanel, BorderLayout.CENTER);
-		add(buttonsPanel, BorderLayout.SOUTH);
-		setPreferredSize(new Dimension(320, 610));
-		setTitle("JavaEye");
+        setLayout(new BorderLayout());
+        add(settingsPanel, BorderLayout.CENTER);
+        add(buttonsPanel, BorderLayout.SOUTH);
+        setPreferredSize(new Dimension(320, 610));
+        setTitle("JavaEye");
 
-		URL iconURL = getClass().getResource("/img/eye.png");
-		ImageIcon icon = new ImageIcon(iconURL);
-		setIconImage(icon.getImage());
+        URL iconURL = getClass().getResource("/img/eye.png");
+        ImageIcon icon = new ImageIcon(iconURL);
+        setIconImage(icon.getImage());
 
-		setVisible(true);
-		// setResizable(false);
-		pack();
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setLocationRelativeTo(null);
-	}
+        setVisible(true);
+        pack();
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+    }
 
-	@Override
-	public void uncaughtException(Thread t, Throwable e) {
-		System.out.println("Exception in thread " + t.getName());
+    @Override
+    public void uncaughtException(Thread t, Throwable e) {
+        log.info("Exception in thread " + t.getName());
+    }
 
-	}
+    @Override
+    public void windowOpened(WindowEvent e) {
 
-	@Override
-	public void windowOpened(WindowEvent e) {
-		// TODO Auto-generated method stub
+    }
 
-	}
+    @Override
+    public void windowClosing(WindowEvent e) {
+        streamReceiver.stop();
+    }
 
-	@Override
-	public void windowClosing(WindowEvent e) {
-		streamReceiver.stop();
-	}
+    @Override
+    public void windowClosed(WindowEvent e) {
 
-	@Override
-	public void windowClosed(WindowEvent e) {
+    }
 
-	}
+    @Override
+    public void windowIconified(WindowEvent e) {
+        log.info("Camera " + webcam.getName() + " changed its state to pause");
+        webcamPreviewPanel.pause();
+    }
 
-	@Override
-	public void windowIconified(WindowEvent e) {
-		System.out.println("Camera " + webcam.getName() + " changed its state to pause");
-		webcamPreviewPanel.pause();
+    @Override
+    public void windowDeiconified(WindowEvent e) {
+        log.info("Camera " + webcam.getName() + " changed its state to resume");
+        webcamPreviewPanel.resume();
+    }
 
-	}
+    @Override
+    public void windowActivated(WindowEvent e) {
+    }
 
-	@Override
-	public void windowDeiconified(WindowEvent e) {
-		System.out.println("Camera " + webcam.getName() + " changed its state to resume");
-		webcamPreviewPanel.resume();
-	}
+    @Override
+    public void windowDeactivated(WindowEvent e) {
+    }
 
-	@Override
-	public void windowActivated(WindowEvent e) {
-		// TODO Auto-generated method stub
+    @SuppressWarnings("unchecked")
+    @Override
+    public void webcamFound(WebcamDiscoveryEvent arg0) {
+        if (webcamPicker != null) {
+            webcamPicker.addItem(arg0.getWebcam());
+        }
 
-	}
+    }
 
-	@Override
-	public void windowDeactivated(WindowEvent e) {
-		// TODO Auto-generated method stub
+    @Override
+    public void webcamGone(WebcamDiscoveryEvent arg0) {
+        if (webcamPicker != null) {
+            webcamPicker.removeItem(arg0.getWebcam());
+        }
+    }
 
-	}
+    @Override
+    public void webcamClosed(WebcamEvent arg0) {
+        log.info("Webcam " + webcam.getName() + " closed");
 
-	@Override
-	public void webcamFound(WebcamDiscoveryEvent arg0) {
-		if (webcamPicker != null) {
-			webcamPicker.addItem(arg0.getWebcam());
-		}
+    }
 
-	}
+    @Override
+    public void webcamDisposed(WebcamEvent arg0) {
+        log.info("Webcam " + webcam.getName() + " disposed");
 
-	@Override
-	public void webcamGone(WebcamDiscoveryEvent arg0) {
-		if (webcamPicker != null) {
-			webcamPicker.removeItem(arg0.getWebcam());
-		}
-	}
+    }
 
-	@Override
-	public void webcamClosed(WebcamEvent arg0) {
-		System.out.println("Webcam " + webcam.getName() + " closed");
+    @Override
+    public void webcamImageObtained(WebcamEvent arg0) {
+    }
 
-	}
+    @Override
+    public void webcamOpen(WebcamEvent arg0) {
+        log.info("Webcam " + webcam.getName() + " opened");
 
-	@Override
-	public void webcamDisposed(WebcamEvent arg0) {
-		System.out.println("Webcam " + webcam.getName() + " disposed");
+    }
 
-	}
+    @Override
+    public void itemStateChanged(ItemEvent e) {
+        if (e.getItem() != webcam) {
+            if (webcam != null) {
+                webcamPreviewPanel.stop();
+                webcamSetupPanel.remove(webcamPreviewPanel);
+                webcam.removeWebcamListener(this);
+                webcam.close();
 
-	@Override
-	public void webcamImageObtained(WebcamEvent arg0) {
-		// TODO Auto-generated method stub
+                webcam = (Webcam) e.getItem();
+                webcam.addWebcamListener(Preferences.this);
+                log.info("Selected camera: " + webcam.getName());
+                webcamPreviewPanel = new WebcamPanel(webcam, false);
+                webcamPreviewPanel.setFPSDisplayed(true);
+                webcamPreviewPanel.setDoubleBuffered(true);
+                webcamPreviewPanel.setImageSizeDisplayed(true);
 
-	}
+                webcamSetupPanel.add(webcamPreviewPanel, BorderLayout.CENTER);
+                pack();
 
-	@Override
-	public void webcamOpen(WebcamEvent arg0) {
-		System.out.println("Webcam " + webcam.getName() + " opened");
-
-	}
-
-	@Override
-	public void itemStateChanged(ItemEvent e) {
-		if (e.getItem() != webcam) {
-			if (webcam != null) {
-				webcamPreviewPanel.stop();
-				webcamSetupPanel.remove(webcamPreviewPanel);
-				webcam.removeWebcamListener(this);
-				webcam.close();
-
-				webcam = (Webcam) e.getItem();
-				webcam.addWebcamListener(Preferences.this);
-				System.out.println("Selected camera: " + webcam.getName());
-				webcamPreviewPanel = new WebcamPanel(webcam, false);
-				webcamPreviewPanel.setFPSDisplayed(true);
-				webcamPreviewPanel.setDoubleBuffered(true);
-				webcamPreviewPanel.setImageSizeDisplayed(true);
-
-				webcamSetupPanel.add(webcamPreviewPanel, BorderLayout.CENTER);
-				pack();
-
-				Thread webcamPanelThread = new Thread() {
-					@Override
-					public void run() {
-						System.out.println("Camera runs on " + Thread.currentThread().getName());
-						webcamPreviewPanel.start();
-					}
-				};
-				webcamPanelThread.setDaemon(true);
-				webcamPanelThread.setName("preview panel on preferences window");
-				webcamPanelThread.setUncaughtExceptionHandler(this);
-				webcamPanelThread.start();
-			}
-		}
-	}
+                Thread webcamPanelThread = new Thread() {
+                    @Override
+                    public void run() {
+                        log.info("Camera runs on " + Thread.currentThread().getName());
+                        webcamPreviewPanel.start();
+                    }
+                };
+                webcamPanelThread.setDaemon(true);
+                webcamPanelThread.setName("preview panel on preferences window");
+                webcamPanelThread.setUncaughtExceptionHandler(this);
+                webcamPanelThread.start();
+            }
+        }
+    }
 }

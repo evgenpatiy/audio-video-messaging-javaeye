@@ -13,30 +13,25 @@ import ua.itea.javaeye.handler.StreamClientListener;
 import ua.itea.javaeye.handler.StreamFrameListener;
 
 public class StreamClientChannelPipelineFactory implements ChannelPipelineFactory {
-	protected final StreamClientListener streamClientListener;
-	protected final StreamFrameListener streamFrameListener;
-	protected final Dimension dimension;
+    protected final StreamClientListener streamClientListener;
+    protected final StreamFrameListener streamFrameListener;
+    protected final Dimension dimension;
 
-	public StreamClientChannelPipelineFactory(StreamClientListener streamClientListener,
-			StreamFrameListener streamFrameListener, Dimension dimension) {
-		super();
-		this.streamClientListener = streamClientListener;
-		this.streamFrameListener = streamFrameListener;
-		this.dimension = dimension;
-	}
+    public StreamClientChannelPipelineFactory(StreamClientListener streamClientListener,
+            StreamFrameListener streamFrameListener, Dimension dimension) {
+        super();
+        this.streamClientListener = streamClientListener;
+        this.streamFrameListener = streamFrameListener;
+        this.dimension = dimension;
+    }
 
-	@Override
-	public ChannelPipeline getPipeline() throws Exception {
-		ChannelPipeline pipeline = Channels.pipeline();
-		// add an simple indicator handler
-		pipeline.addLast("stream client handler", new StreamClientHandler(streamClientListener));
-		// add the frame codec
-		pipeline.addLast("frame decoder", new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4, 0, 4));
-		// add the video stream handler
-		// change the below falst --> ture ,if using the netty's frame codec
-		pipeline.addLast("stream handler", new H264Decoder(streamFrameListener, dimension, false, false));
-
-		return pipeline;
-	}
+    @Override
+    public ChannelPipeline getPipeline() throws Exception {
+        ChannelPipeline pipeline = Channels.pipeline();
+        pipeline.addLast("stream client handler", new StreamClientHandler(streamClientListener));
+        pipeline.addLast("frame decoder", new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4, 0, 4));
+        pipeline.addLast("stream handler", new H264Decoder(streamFrameListener, dimension, false, false));
+        return pipeline;
+    }
 
 }
